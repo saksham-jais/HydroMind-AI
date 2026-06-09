@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     firebase_database_url: str | None = None
     gemini_api_key: str | None = None
     n8n_webhook_url: str | None = None
-    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    cors_origins: str = "http://localhost:5173,http://localhost:3000,https://your-frontend-url.vercel.app"
     models_dir: str = "models_artifacts"
 
     @property

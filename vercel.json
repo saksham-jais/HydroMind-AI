@@ -3,6 +3,6 @@
   "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "env": {
-    "VITE_API_URL": "@hydromind_api_url"
+    "VITE_API_URL": "https://hydromind-ai.onrender.com/api"
   }
 }
