@@ -1,0 +1,84 @@
+{
+  "name": "HydroMind WhatsApp Alert Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hydromind-alerts",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.riskScore }}",
+              "operation": "largerEqual",
+              "value2": 75
+            }
+          ]
+        }
+      },
+      "id": "risk-check",
+      "name": "Risk Score >= 75%",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/webhook/hydromind-alerts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "whatsapp-baileys",
+      "name": "Send WhatsApp (Baileys)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log",
+              "name": "status",
+              "value": "whatsapp_sent",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [920, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Risk Score >= 75%", "type": "main", "index": 0 }]]
+    },
+    "Risk Score >= 75%": {
+      "main": [[{ "node": "Send WhatsApp (Baileys)", "type": "main", "index": 0 }]]
+    },
+    "Send WhatsApp (Baileys)": {
+      "main": [[{ "node": "Log Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "HydroMind" }]
+}
