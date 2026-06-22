@@ -43,9 +43,36 @@ def _init_firebase() -> bool:
 def get_villages() -> list[dict]:
     if _init_firebase() and _db:
         ref = _db.reference("/villages")
-        data = ref.get() or {}
-        if isinstance(data, dict) and data:
-            return list(data.values()) if all(isinstance(v, dict) for v in data.values()) else VILLAGES
+        fb_data = ref.get() or {}
+        if isinstance(fb_data, dict) and fb_data:
+            # Merge live Firebase fields (waterLevel, lastReading) ON TOP of full mock village data
+            # This preserves name/district/riskScore etc while showing the live ESP32 waterLevel
+            merged = []
+            for v in VILLAGES:
+                live = fb_data.get(v["id"], {})
+                if isinstance(live, dict) and "lastReading" in live:
+                    try:
+                        from datetime import timezone
+                        last_t = datetime.fromisoformat(live["lastReading"].replace("Z", "+00:00"))
+                        if (datetime.now(timezone.utc) - last_t).total_seconds() > 15:
+                            merged.append(v)
+                            continue
+                    except ValueError:
+                        pass
+                    
+                    v_updated = {**v, **live}
+                    # Update riskScore based on ESP32 desk demo logic to match hardware LEDs
+                    wl = v_updated.get("waterLevel", v["waterLevel"])
+                    if wl < 0.33: # <10cm water depth (Red LED / Empty)
+                        v_updated["riskScore"] = 95
+                    elif wl < 0.66: # 10-20cm water depth (Yellow LED / Filling)
+                        v_updated["riskScore"] = 65
+                    else: # >20cm water depth (Green LED / Full)
+                        v_updated["riskScore"] = 25
+                    merged.append(v_updated)
+                else:
+                    merged.append(v)
+            return merged
     return VILLAGES
 
 
@@ -69,7 +96,7 @@ def get_alerts() -> list[dict]:
 def get_totals() -> dict:
     villages = get_villages()
     high_risk = sum(1 for v in villages if v.get("riskScore", 0) >= 75)
-    avg_level = round(sum(v.get("waterLevel", 0) for v in villages) / max(len(villages), 1))
+    avg_level = round(sum(v.get("waterLevel", 0) for v in villages) / max(len(villages), 1), 1)
     alerts = get_alerts()
     active = sum(1 for a in alerts if a.get("status") in ("sent", "pending"))
     return {

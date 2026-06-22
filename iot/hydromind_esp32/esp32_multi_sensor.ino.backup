@@ -40,11 +40,11 @@ const float TANK_DEPTH_CM = 30.0; // 30 cm for desk demo
 const float CM_TO_FT = 0.0328084;
 
 // Alert Thresholds (distance from sensor to object/water in cm)
-const float DIST_RED_MIN = 20.0;    // >20 cm = Red + Buzzer (empty tank)
-const float DIST_YELLOW_MIN = 10.0; // 10-20 cm = Yellow (getting full)
-// <10 cm = Green (full tank)
+const float DIST_SAFE_MIN = 20.0;    // >20 cm = Green (empty tank)
+const float DIST_WARNING_MIN = 10.0; // 10-20 cm = Yellow (getting full)
+// <10 cm = Red + Buzzer (dangerously full)
 
-const unsigned long READ_INTERVAL_MS = 2000; 
+const unsigned long READ_INTERVAL_MS = 30000;
 
 unsigned long lastRead = 0;
 
@@ -90,13 +90,13 @@ void setAlert(float distanceCm) {
   digitalWrite(LED_RED, LOW);
   digitalWrite(BUZZER_PIN, LOW);
 
-  if (distanceCm >= DIST_RED_MIN) {
-    digitalWrite(LED_RED, HIGH);
-    digitalWrite(BUZZER_PIN, HIGH);
-  } else if (distanceCm >= DIST_YELLOW_MIN) {
+  if (distanceCm >= DIST_SAFE_MIN) {
+    digitalWrite(LED_GREEN, HIGH);
+  } else if (distanceCm >= DIST_WARNING_MIN) {
     digitalWrite(LED_YELLOW, HIGH);
   } else {
-    digitalWrite(LED_GREEN, HIGH);
+    digitalWrite(LED_RED, HIGH);
+    digitalWrite(BUZZER_PIN, HIGH);
   }
 }
 

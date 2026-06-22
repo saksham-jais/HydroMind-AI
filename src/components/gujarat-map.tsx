@@ -1,5 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Tooltip, ZoomControl } from "react-leaflet";
-import { villages, riskLevel } from "@/lib/mock-data";
+import { riskLevel, villages as mockVillages } from "@/lib/mock-data";
+import { api } from "@/lib/api/client";
+import { useQuery } from "@tanstack/react-query";
 
 const colorFor = (score: number) => {
   const lvl = riskLevel(score);
@@ -8,7 +10,20 @@ const colorFor = (score: number) => {
   return "oklch(0.65 0.16 145)";
 };
 
-export function GujaratMap({ height = 480 }: { height?: number }) {
+export function GujaratMap({ height = 480, search = "" }: { height?: number; search?: string }) {
+  const { data: villages = mockVillages } = useQuery({
+    queryKey: ["villages"],
+    queryFn: () => api.villages(),
+    refetchInterval: 2000,
+    initialData: mockVillages
+  });
+
+  const q = search.toLowerCase().trim();
+  const filteredVillages = villages.filter(v => {
+    if (!q) return true;
+    return v.name.toLowerCase().includes(q) || v.id.toLowerCase() === q;
+  });
+
   return (
     <div className="overflow-hidden rounded-md border border-border" style={{ height }}>
       <MapContainer
@@ -23,7 +38,7 @@ export function GujaratMap({ height = 480 }: { height?: number }) {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <ZoomControl position="topright" />
-        {villages.map((v) => (
+        {filteredVillages.map((v) => (
           <CircleMarker
             key={v.id}
             center={[v.lat, v.lng]}

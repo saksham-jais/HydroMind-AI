@@ -1,10 +1,24 @@
-import { villages, riskLevel } from "@/lib/mock-data";
+import { riskLevel, villages as mockVillages } from "@/lib/mock-data";
+import { api } from "@/lib/api/client";
+import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export function VillageTable({ limit }: { limit?: number }) {
-  const rows = [...villages].sort((a, b) => b.riskScore - a.riskScore).slice(0, limit);
+export function VillageTable({ limit, search = "" }: { limit?: number; search?: string }) {
+  const { data: villages = mockVillages } = useQuery({
+    queryKey: ["villages"],
+    queryFn: () => api.villages(),
+    refetchInterval: 2000,
+    initialData: mockVillages
+  });
+
+  const q = search.toLowerCase().trim();
+  const filtered = villages.filter(v => {
+    if (!q) return true;
+    return v.name.toLowerCase().includes(q) || v.id.toLowerCase() === q;
+  });
+  const rows = [...filtered].sort((a, b) => b.riskScore - a.riskScore).slice(0, limit);
   return (
     <div className="rounded-md border border-border bg-card">
       <Table>

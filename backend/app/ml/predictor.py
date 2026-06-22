@@ -47,10 +47,12 @@ class Predictor:
         self._loaded = True
 
     def _village(self, village_id: str) -> dict:
-        for v in VILLAGES:
+        from app.services.firebase import get_villages
+        villages = get_villages()
+        for v in villages:
             if v["id"] == village_id:
                 return v
-        return VILLAGES[0]
+        return villages[0]
 
     def forecast(self, village_id: str = "v1") -> dict:
         self._ensure_models()
@@ -103,7 +105,8 @@ class Predictor:
     def anomalies(self, village_id: str | None = None) -> list[dict]:
         self._ensure_models()
         results = []
-        villages = [self._village(village_id)] if village_id else VILLAGES[:6]
+        from app.services.firebase import get_villages
+        villages = [self._village(village_id)] if village_id else get_villages()[:6]
 
         types = ["sudden_drop", "abnormal_extraction", "sensor_spike"]
         descriptions = [
