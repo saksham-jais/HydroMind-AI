@@ -34,14 +34,14 @@ export function ForecastPanel({ villageId = "v1", villageName = "Mehsana" }: { v
             className="rounded-md border border-border bg-muted/30 p-3"
           >
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{it.label}</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
+            <p className="mt-1 text-xl font-semibold tabular-nums text-foreground flex items-baseline">
               {it.value}
               <span className="ml-1 text-xs font-normal text-muted-foreground">ft</span>
             </p>
             <p className="text-[10px] text-muted-foreground">{it.sub}</p>
             {idx > 0 && (
               <p className="mt-1 text-[10px] font-medium text-critical">
-                +{it.value - forecast.current} ft deeper
+                +{(it.value - forecast.current).toFixed(1)} ft deeper
               </p>
             )}
           </div>
