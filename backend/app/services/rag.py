@@ -6,39 +6,20 @@ import logging
 from pathlib import Path
 
 from app.config import settings
-from app.data.mock_villages import INSIGHTS, VILLAGES
-from app.services.firebase import get_alerts, get_totals
+from app.data.mock_villages import INSIGHTS
+from app.services.firebase import get_alerts, get_totals, get_villages
 
 logger = logging.getLogger(__name__)
 
 _chroma_ready = False
 _retriever = None
 
-CANNED = {
-    "why is mehsana critical": (
-        "Mehsana's groundwater has declined 18% in the last 6 months — the steepest in Gujarat. "
-        "Current depth is 98 ft, projected to cross the 150 ft critical threshold within 143 days "
-        "based on the LightGBM forecast."
-    ),
-    "which villages need inspection": (
-        "Top inspection priority (composite risk ≥80%): Mehsana (92%), Bhuj (88%), Patan (84%), "
-        "Palanpur (81%). Field officers have been notified via n8n."
-    ),
-    "show highest risk zones": (
-        "Critical belt: Mehsana, Banaskantha, and Patan districts. Kutch trending warning. "
-        "Ahmedabad rural pockets remain stable."
-    ),
-    "what actions should be taken": (
-        "1) Immediate borewell audit in Mehsana & Bhuj. 2) Rationing notice for Banaskantha. "
-        "3) Halt new commercial extraction permits across critical districts. "
-        "4) Schedule monsoon recharge structures."
-    ),
-}
+
 
 
 def _build_knowledge_docs() -> list[str]:
     docs = []
-    for v in VILLAGES:
+    for v in get_villages():
         docs.append(
             f"Village {v['name']} in {v['district']} district: water level {v['waterLevel']} ft, "
             f"risk score {v['riskScore']}%, 6-month trend {v['trend6mo']}% decline, "
@@ -92,24 +73,36 @@ def _init_chroma() -> bool:
 
 def _rule_based(query: str) -> str:
     q = query.lower().strip()
-    for key, answer in CANNED.items():
-        if key in q:
-            return answer
+    villages = get_villages()
+    
+    if "mehsana" in q and ("critical" in q or "risk" in q or "why" in q):
+        v = next((v for v in villages if v["name"].lower() == "mehsana"), None)
+        if v:
+            if v["riskScore"] < 50:
+                return f"According to live sensor data, Mehsana is currently SAFE with a low risk score of {v['riskScore']}%. The water level is at {v['waterLevel']} ft."
+            return f"Mehsana is currently at risk! Risk score is {v['riskScore']}%. The water level is at {v['waterLevel']} ft."
 
     if "risk" in q or "critical" in q:
-        top = sorted(VILLAGES, key=lambda v: v["riskScore"], reverse=True)[:3]
-        names = ", ".join(f"{v['name']} ({v['riskScore']}%)" for v in top)
-        return f"Highest risk villages: {names}. Mehsana leads with 18% 6-month decline."
+        top = sorted(villages, key=lambda v: v.get("riskScore", 0), reverse=True)[:3]
+        names = ", ".join(f"{v['name']} ({v.get('riskScore', 0)}%)" for v in top)
+        return f"Based on live sensor data, the highest risk villages currently are: {names}."
+
+    if "inspection" in q or "actions" in q:
+        high_risk = [v for v in villages if v.get("riskScore", 0) >= 80]
+        if not high_risk:
+            return "Based on real-time data, no villages currently require immediate inspection."
+        names = ", ".join(v['name'] for v in high_risk)
+        return f"Top inspection priority (composite risk ≥80%): {names}. Field officers have been notified."
 
     if "alert" in q:
         alerts = get_alerts()
-        pending = [a for a in alerts if a["status"] == "pending"]
+        pending = [a for a in alerts if a.get("status") == "pending"]
         return f"There are {len(alerts)} total alerts, {len(pending)} pending dispatch via n8n."
 
     totals = get_totals()
     return (
-        f"HydroMind monitors {totals['villages']} Gujarat villages. "
-        f"Average water level is {totals['avgWaterLevel']} ft with {totals['highRisk']} high-risk zones. "
+        f"HydroMind monitors {totals.get('villages', 0)} Gujarat villages. "
+        f"Average water level is {totals.get('avgWaterLevel', 0)} ft with {totals.get('highRisk', 0)} high-risk zones. "
         "Ask about specific villages, risk zones, alerts, or recommended actions."
     )
 

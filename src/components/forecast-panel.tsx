@@ -2,8 +2,13 @@ import { Card } from "@/components/ui/card";
 import { useForecast } from "@/lib/api/hooks";
 import { Sparkles } from "lucide-react";
 
-export function ForecastPanel({ villageId = "v1" }: { villageId?: string }) {
+export function ForecastPanel({ villageId = "v1", villageName = "Mehsana" }: { villageId?: string, villageName?: string }) {
   const { data: forecast } = useForecast(villageId);
+  
+  if (!forecast) {
+    return <Card className="h-[216px] animate-pulse p-5 bg-muted/50" />;
+  }
+
   const items = [
     { label: "Current", value: forecast.current, sub: "Today" },
     { label: "30 Day", value: forecast.d30, sub: "Forecast" },
@@ -15,7 +20,7 @@ export function ForecastPanel({ villageId = "v1" }: { villageId?: string }) {
     <Card className="p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-foreground">AI Forecast — Mehsana</h3>
+          <h3 className="text-sm font-semibold text-foreground">AI Forecast — {villageName}</h3>
           <p className="text-xs text-muted-foreground">Water depth below ground level (ft)</p>
         </div>
         <div className="flex items-center gap-1.5 rounded-md bg-accent/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-accent">

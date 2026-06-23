@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { officers } from "@/lib/mock-data";
-import { useAlerts } from "@/lib/api/hooks";
+import { useAlerts, useVillages } from "@/lib/api/hooks";
 import { Mail, CheckCircle2, Clock, Send } from "lucide-react";
+import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/alerts")({
@@ -24,16 +26,45 @@ const statusMap = {
 };
 
 function Alerts() {
-  const { data: alerts } = useAlerts();
+  const { data: alerts = [] } = useAlerts();
+  const { data: villages = [] } = useVillages();
+  const [selectedVillageId, setSelectedVillageId] = useState<string>("all");
+
+  const filteredAlerts = selectedVillageId === "all" 
+    ? alerts 
+    : alerts.filter(a => a.villageId === selectedVillageId);
+
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Alert Center</h1>
-        <p className="text-sm text-muted-foreground">Auto-triggered when risk score ≥ 75%. Dispatched via n8n.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Alert Center</h1>
+          <p className="text-sm text-muted-foreground">Auto-triggered when risk score ≥ 75%. Dispatched via n8n.</p>
+        </div>
+        <div className="w-full sm:w-[240px]">
+          <Select value={selectedVillageId} onValueChange={setSelectedVillageId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by village..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Villages</SelectItem>
+              {villages.map((v) => (
+                <SelectItem key={v.id} value={v.id}>
+                  {v.name} ({v.district})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {alerts.map((a) => {
+        {filteredAlerts.length === 0 && (
+          <div className="col-span-full rounded-md border border-dashed p-8 text-center text-muted-foreground">
+            No active alerts for the selected village.
+          </div>
+        )}
+        {filteredAlerts.map((a) => {
           const st = statusMap[a.status as keyof typeof statusMap] ?? statusMap.pending;
           return (
             <Card key={a.id} className="p-5 border-l-4 border-l-critical">

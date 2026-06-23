@@ -1,5 +1,7 @@
 # HydroMind AI
 
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+
 **Predict. Alert. Prevent.**
 
 AI-powered groundwater intelligence platform for Gujarat — combining IoT monitoring, ML forecasting, automated government alerts, and a RAG decision-support assistant.

@@ -13,12 +13,7 @@ const suggestions = [
   "What actions should be taken?",
 ];
 
-const canned: Record<string, string> = {
-  "Why is Mehsana critical?": "Mehsana's groundwater has declined 18% in the last 6 months — the steepest in Gujarat. Current depth is 98 ft, projected to cross the 150 ft critical threshold within 143 days based on the LightGBM forecast.",
-  "Which villages need inspection?": "Top inspection priority (composite risk ≥80%): Mehsana (92%), Bhuj (88%), Patan (84%), Palanpur (81%). Field officers have been notified via n8n.",
-  "Show highest risk zones.": "Critical belt: Mehsana, Banaskantha, and Patan districts. Kutch trending warning. Ahmedabad rural pockets remain stable.",
-  "What actions should be taken?": "1) Immediate borewell audit in Mehsana & Bhuj. 2) Rationing notice for Banaskantha. 3) Halt new commercial extraction permits across critical districts. 4) Schedule monsoon recharge structures.",
-};
+
 
 export function Chatbot() {
   const [open, setOpen] = useState(false);
@@ -38,7 +33,7 @@ export function Chatbot() {
       const res = await api.chat(text);
       setMessages((m) => [...m, { role: "assistant", text: res.answer, source: res.source }]);
     } catch {
-      const reply = canned[text] ?? "I'm running on mock data — start the FastAPI backend and set GEMINI_API_KEY for live RAG answers.";
+      const reply = "I'm running offline — start the FastAPI backend and connect Firebase for live RAG answers based on sensor data.";
       setMessages((m) => [...m, { role: "assistant", text: reply, source: "offline" }]);
     } finally {
       setLoading(false);
