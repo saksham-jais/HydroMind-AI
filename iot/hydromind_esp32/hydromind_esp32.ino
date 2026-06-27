@@ -36,13 +36,13 @@ const int LED_YELLOW = 27;
 const int BUZZER_PIN = 14;
 
 // Tank calibration (cm from sensor to bottom of tank)
-const float TANK_DEPTH_CM = 30.0; // 30 cm for desk demo
+const float TANK_DEPTH_CM = 12.0; // 12 cm for desk demo
 const float CM_TO_FT = 0.0328084;
 
 // Alert Thresholds (distance from sensor to object/water in cm)
-const float DIST_RED_MIN = 20.0;    // >20 cm = Red + Buzzer (empty tank)
-const float DIST_YELLOW_MIN = 10.0; // 10-20 cm = Yellow (getting full)
-// <10 cm = Green (full tank)
+const float DIST_RED_MIN = 8.0;    // >= 8 cm = Red + Buzzer (empty tank)
+const float DIST_YELLOW_MIN = 5.0; // 5-8 cm = Yellow (getting full)
+// < 5 cm = Green (full tank)
 
 const unsigned long READ_INTERVAL_MS = 2000; 
 

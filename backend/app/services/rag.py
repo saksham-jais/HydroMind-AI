@@ -48,26 +48,31 @@ def _init_chroma() -> bool:
     global _chroma_ready, _retriever
     if _chroma_ready:
         return _retriever is not None
-    _chroma_ready = True
 
     if not settings.gemini_api_key:
         logger.info("Gemini API key not set — RAG uses rule-based fallback")
+        _chroma_ready = True
         return False
+
+    key_preview = settings.gemini_api_key[:8] if settings.gemini_api_key else "None"
+    logger.info("Initializing ChromaDB RAG with key starting: %s...", key_preview)
 
     try:
         from langchain_google_genai import GoogleGenerativeAIEmbeddings
-        from langchain_community.vectorstores import Chroma
+        from langchain_chroma import Chroma
         from langchain_core.documents import Document
 
         persist_dir = str(Path("chroma_db"))
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=settings.gemini_api_key)
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=settings.gemini_api_key)
         docs = [Document(page_content=d) for d in _build_knowledge_docs()]
         vectorstore = Chroma.from_documents(docs, embeddings, persist_directory=persist_dir)
         _retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+        _chroma_ready = True
         logger.info("ChromaDB RAG initialized with %d documents", len(docs))
         return True
     except Exception as e:
         logger.warning("RAG init failed: %s — using fallback", e)
+        _chroma_ready = True
         return False
 
 
@@ -115,7 +120,7 @@ async def chat(query: str) -> dict:
 
             docs = _retriever.invoke(query)
             context = "\n".join(d.page_content for d in docs)
-            llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=settings.gemini_api_key)
+            llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", google_api_key=settings.gemini_api_key)
             prompt = ChatPromptTemplate.from_messages([
                 ("system", "You are HydroMind AI, a groundwater intelligence assistant for Gujarat government officials. Answer concisely using only the provided context."),
                 ("human", "Context:\n{context}\n\nQuestion: {query}"),

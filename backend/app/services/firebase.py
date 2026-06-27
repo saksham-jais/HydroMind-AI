@@ -63,11 +63,11 @@ def get_villages() -> list[dict]:
                     v_updated = {**v, **live}
                     # Update riskScore based on ESP32 desk demo logic to match hardware LEDs
                     wl = v_updated.get("waterLevel", v["waterLevel"])
-                    if wl < 0.33: # <10cm water depth (Red LED / Empty)
+                    if wl <= 0.13: # <= 4cm water depth (Red LED / Empty)
                         v_updated["riskScore"] = 95
-                    elif wl < 0.66: # 10-20cm water depth (Yellow LED / Filling)
+                    elif wl <= 0.23: # 4-7cm water depth (Yellow LED / Filling)
                         v_updated["riskScore"] = 65
-                    else: # >20cm water depth (Green LED / Full)
+                    else: # > 7cm water depth (Green LED / Full)
                         v_updated["riskScore"] = 25
                     merged.append(v_updated)
                 else:
