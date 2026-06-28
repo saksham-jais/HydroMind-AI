@@ -12,7 +12,7 @@ export const Route = createFileRoute("/alerts")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Alerts · HydroMind AI" },
+      { title: "Alerts · Jalrakshak AI" },
       { name: "description", content: "Active alerts and officer dispatch (n8n)." },
     ],
   }),

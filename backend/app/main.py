@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="HydroMind AI API",
+    title="Jalrakshak AI API",
     description="AI-powered groundwater intelligence platform for Gujarat",
     version="1.0.0",
     lifespan=lifespan,
@@ -38,4 +38,4 @@ app.include_router(chat.router, prefix="/api")
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "HydroMind AI", "tagline": "Predict. Alert. Prevent."}
+    return {"status": "ok", "service": "Jalrakshak AI", "tagline": "Predict. Alert. Prevent."}

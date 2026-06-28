@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:05080d,50:0a1628,100:0ea5e9&height=180&section=header&text=HydroMind+AI&fontSize=64&fontColor=bae6fd&fontAlignY=40&desc=Groundwater+Intelligence+for+a+Thirsty+Gujarat&descSize=18&descAlignY=62&animation=fadeIn" />
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:05080d,50:0a1628,100:0ea5e9&height=180&section=header&text=Jalrakshak+AI&fontSize=64&fontColor=bae6fd&fontAlignY=40&desc=Groundwater+Intelligence+for+a+Thirsty+Gujarat&descSize=18&descAlignY=62&animation=fadeIn" />
 
 <br/>
 
@@ -11,7 +11,7 @@
 <p>
   <img src="https://img.shields.io/badge/STATUS-LIVE-0ea5e9?style=for-the-badge&labelColor=05080d" />
   <img src="https://img.shields.io/badge/BUILD-PASSING-0ea5e9?style=for-the-badge&labelColor=05080d" />
-  <img src="https://img.shields.io/badge/HACKAARAMBH-2026-0ea5e9?style=for-the-badge&labelColor=05080d" />
+  <img src="https://img.shields.io/badge/BUILD_FOR_GOOD-2026-0ea5e9?style=for-the-badge&labelColor=05080d" />
 </p>
 
 <p>
@@ -42,11 +42,11 @@
 
 Over **120 villages** in Gujarat are depleting their aquifers faster than monsoon can replenish them. District officers get notified only when the borewell runs dry — too late to act.
 
-**HydroMind AI** is a real-time groundwater intelligence platform that transforms raw IoT sensor data into **predictive, actionable decisions** for government officials. It answers the question that actually matters:
+**Jalrakshak AI** is a real-time groundwater intelligence platform that transforms raw IoT sensor data into **predictive, actionable decisions** for government officials. It answers the question that actually matters:
 
 > *"Which villages will hit a water crisis first — and what should we do about it right now?"*
 
-Built for **HackAarambh 2026**, it functions as a command-center decision tool powered by live ESP32 sensors, three production ML models, automated WhatsApp/email alerts, and a RAG AI assistant grounded on real village data.
+Built for **BUILD FOR GOOD 2026** under the **04 DHARTI (धरती) - Water Scarcity & Access** theme, it functions as a command-center decision tool powered by live ESP32 sensors, three production ML models, automated WhatsApp/email alerts, and a RAG AI assistant grounded on real village data.
 
 <table>
 <tr>
@@ -343,7 +343,7 @@ Firmware: iot/hydromind_esp32/hydromind_esp32.ino
 ## 📂 Repository Structure
 
 ```
-HydroMind-AI/
+Jalrakshak-AI/
 │
 ├── src/                          # React dashboard (TanStack Start)
 │   ├── components/               # KPI cards, forecast panel, map, chatbot…
@@ -397,6 +397,6 @@ HydroMind-AI/
 
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0ea5e9,50:0a1628,100:05080d&height=120&section=footer" />
 
-<sub>Built for HackAarambh 2026 · Government of Gujarat Water Resources Dept.</sub>
+<sub>Built for BUILD FOR GOOD 2026 · Tech & AI for Social Good · A Sama Initiative</sub>
 
 </div>

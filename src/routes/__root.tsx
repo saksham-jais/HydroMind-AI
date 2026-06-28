@@ -89,7 +89,7 @@ function RootComponent() {
               <SidebarTrigger />
               <div className="h-5 w-px bg-border" />
               <div className="flex flex-col">
-                <span className="text-sm font-semibold leading-none">HydroMind AI</span>
+                <span className="text-sm font-semibold leading-none">Jalrakshak AI</span>
                 <span className="text-[10px] text-muted-foreground">Predict · Alert · Prevent · Govt. of Gujarat</span>
               </div>
               <div className="ml-auto flex items-center gap-2">
