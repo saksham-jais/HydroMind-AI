@@ -33,7 +33,7 @@ export function AppSidebar() {
             <Droplets className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">Jalrakshak AI</span>
+            <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">HydroMind AI</span>
             <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Predict · Alert · Prevent</span>
           </div>
         </div>

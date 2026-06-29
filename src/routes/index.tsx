@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Overview · Jalrakshak AI" },
+      { title: "Overview · HydroMind AI" },
       { name: "description", content: "Real-time groundwater risk overview across Gujarat villages." },
     ],
   }),

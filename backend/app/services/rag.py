@@ -106,7 +106,7 @@ def _rule_based(query: str) -> str:
 
     totals = get_totals()
     return (
-        f"Jalrakshak monitors {totals.get('villages', 0)} Gujarat villages. "
+        f"HydroMind monitors {totals.get('villages', 0)} Gujarat villages. "
         f"Average water level is {totals.get('avgWaterLevel', 0)} ft with {totals.get('highRisk', 0)} high-risk zones. "
         "Ask about specific villages, risk zones, alerts, or recommended actions."
     )
@@ -122,7 +122,7 @@ async def chat(query: str) -> dict:
             context = "\n".join(d.page_content for d in docs)
             llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", google_api_key=settings.gemini_api_key)
             prompt = ChatPromptTemplate.from_messages([
-                ("system", "You are Jalrakshak AI, a groundwater intelligence assistant for Gujarat government officials. Answer concisely using only the provided context."),
+                ("system", "You are HydroMind AI, a groundwater intelligence assistant for Gujarat government officials. Answer concisely using only the provided context."),
                 ("human", "Context:\n{context}\n\nQuestion: {query}"),
             ])
             chain = prompt | llm

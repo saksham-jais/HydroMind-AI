@@ -18,7 +18,7 @@ const suggestions = [
 export function Chatbot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", text: "Namaste. I'm Jalrakshak Assistant, grounded on Gujarat groundwater data. Ask me anything." },
+    { role: "assistant", text: "Namaste. I'm HydroMind Assistant, grounded on Gujarat groundwater data. Ask me anything." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,7 +47,7 @@ export function Chatbot() {
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90"
           size="icon"
-          aria-label="Open Jalrakshak Assistant"
+          aria-label="Open HydroMind Assistant"
         >
           <MessageSquare className="h-6 w-6" />
         </Button>
@@ -58,7 +58,7 @@ export function Chatbot() {
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               <div>
-                <p className="text-sm font-semibold">Jalrakshak Assistant</p>
+                <p className="text-sm font-semibold">HydroMind Assistant</p>
                 <p className="text-[10px] opacity-80">Gemini · LangChain · ChromaDB</p>
               </div>
             </div>

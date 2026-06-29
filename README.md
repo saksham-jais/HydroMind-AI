@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:05080d,50:0a1628,100:0ea5e9&height=180&section=header&text=Jalrakshak+AI&fontSize=64&fontColor=bae6fd&fontAlignY=40&desc=Groundwater+Intelligence+for+a+Thirsty+Gujarat&descSize=18&descAlignY=62&animation=fadeIn" />
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:05080d,50:0a1628,100:0ea5e9&height=180&section=header&text=HydroMind+AI&fontSize=64&fontColor=bae6fd&fontAlignY=40&desc=Groundwater+Intelligence+for+a+Thirsty+Gujarat&descSize=18&descAlignY=62&animation=fadeIn" />
 
 <br/>
 
@@ -42,7 +42,7 @@
 
 Over **120 villages** in Gujarat are depleting their aquifers faster than monsoon can replenish them. District officers get notified only when the borewell runs dry — too late to act.
 
-**Jalrakshak AI** is a real-time groundwater intelligence platform that transforms raw IoT sensor data into **predictive, actionable decisions** for government officials. It answers the question that actually matters:
+**HydroMind AI** is a real-time groundwater intelligence platform that transforms raw IoT sensor data into **predictive, actionable decisions** for government officials. It answers the question that actually matters:
 
 > *"Which villages will hit a water crisis first — and what should we do about it right now?"*
 
@@ -343,7 +343,7 @@ Firmware: iot/hydromind_esp32/hydromind_esp32.ino
 ## 📂 Repository Structure
 
 ```
-Jalrakshak-AI/
+HydroMind-AI/
 │
 ├── src/                          # React dashboard (TanStack Start)
 │   ├── components/               # KPI cards, forecast panel, map, chatbot…
