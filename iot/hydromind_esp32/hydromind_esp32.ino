@@ -15,36 +15,38 @@
  * Libraries: WiFi, HTTPClient, ArduinoJson
  */
 
-#include <WiFi.h>
-#include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
 
 // --- Configuration (update before flashing) ---
-const char* WIFI_SSID = "Ishani";
-const char* WIFI_PASS = "07186556";
-const char* FIREBASE_HOST = "https://hydromind-ai-2116e-default-rtdb.asia-southeast1.firebasedatabase.app";
-const char* FIREBASE_AUTH = "TaODOBhlleN8cQFI0KksRz6mv5II3hmwQLD3CtfR";
-const char* API_URL = "http://192.168.29.219:8000/api/iot/reading";
-const char* VILLAGE_ID = "v1";
+const char *WIFI_SSID = "Airtel_saks_8214";
+const char *WIFI_PASS = "Air@35822";
+const char *FIREBASE_HOST =
+    "https://"
+    "hydromind-ai-2116e-default-rtdb.asia-southeast1.firebasedatabase.app";
+const char *FIREBASE_AUTH = "TaODOBhlleN8cQFI0KksRz6mv5II3hmwQLD3CtfR";
+const char *API_URL = "http://192.168.1.11:8000/api/iot/reading";
+const char *VILLAGE_ID = "v1";
 
 // Sensor pins
 const int TRIG_PIN = 12;
 const int ECHO_PIN = 13;
-const int LED_RED    = 25;
-const int LED_GREEN  = 26;
-const int LED_YELLOW = 27;
+const int LED_RED = 25;
+const int LED_GREEN = 27;
+const int LED_YELLOW = 26;
 const int BUZZER_PIN = 14;
 
 // Tank calibration (cm from sensor to bottom of tank)
-const float TANK_DEPTH_CM = 12.0; // 12 cm for desk demo
+const float TANK_DEPTH_CM = 9.2; // 9.2 cm baseline
 const float CM_TO_FT = 0.0328084;
 
 // Alert Thresholds (distance from sensor to object/water in cm)
-const float DIST_RED_MIN = 8.0;    // >= 8 cm = Red + Buzzer (empty tank)
-const float DIST_YELLOW_MIN = 5.0; // 5-8 cm = Yellow (getting full)
+const float DIST_RED_MIN = 7.0;    // >= 8 cm = Red + Buzzer (empty tank)
+const float DIST_YELLOW_MIN = 4.0; // 4-8 cm = Yellow (getting full)
 // < 5 cm = Green (full tank)
 
-const unsigned long READ_INTERVAL_MS = 2000; 
+const unsigned long READ_INTERVAL_MS = 1000;
 
 unsigned long lastRead = 0;
 
@@ -74,13 +76,15 @@ float measureDistanceCm() {
   digitalWrite(TRIG_PIN, LOW);
 
   long duration = pulseIn(ECHO_PIN, HIGH, 30000);
-  if (duration == 0) return -1;
+  if (duration == 0)
+    return -1;
   return duration * 0.034 / 2.0;
 }
 
 float waterLevelFt(float distanceCm) {
   float waterDepthCm = TANK_DEPTH_CM - distanceCm;
-  if (waterDepthCm < 0) waterDepthCm = 0;
+  if (waterDepthCm < 0)
+    waterDepthCm = 0;
   return waterDepthCm * CM_TO_FT;
 }
 
@@ -101,10 +105,12 @@ void setAlert(float distanceCm) {
 }
 
 void sendToFirebase(float waterLevel) {
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (WiFi.status() != WL_CONNECTED)
+    return;
 
   HTTPClient http;
-  String url = String(FIREBASE_HOST) + "/readings/" + VILLAGE_ID + ".json?auth=" + FIREBASE_AUTH;
+  String url = String(FIREBASE_HOST) + "/readings/" + VILLAGE_ID +
+               ".json?auth=" + FIREBASE_AUTH;
 
   JsonDocument doc;
   doc["villageId"] = VILLAGE_ID;
@@ -123,7 +129,8 @@ void sendToFirebase(float waterLevel) {
 }
 
 void sendToApi(float waterLevel) {
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (WiFi.status() != WL_CONNECTED)
+    return;
 
   HTTPClient http;
   http.begin(API_URL);
@@ -143,7 +150,8 @@ void sendToApi(float waterLevel) {
 }
 
 void loop() {
-  if (millis() - lastRead < READ_INTERVAL_MS) return;
+  if (millis() - lastRead < READ_INTERVAL_MS)
+    return;
   lastRead = millis();
 
   float dist = measureDistanceCm();
