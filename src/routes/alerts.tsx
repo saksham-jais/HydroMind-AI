@@ -62,6 +62,17 @@ function useOfficers() {
   });
 }
 
+function useVillages() {
+  return useQuery<any[]>({
+    queryKey: ["villages"],
+    queryFn: async () => {
+      const r = await fetch(`${API}/api/villages`);
+      if (!r.ok) return [];
+      return r.json();
+    },
+  });
+}
+
 function useAlerts() {
   return useQuery<AlertLog[]>({
     queryKey: ["alerts"],
@@ -107,7 +118,8 @@ function recommendedActions(score: number): string[] {
 
 // ── Manual Dispatch Panel ──────────────────────────────────────────────
 function DispatchPanel({ officers }: { officers: Officer[] }) {
-  const [villageId, setVillageId] = useState("v1");
+  const { data: villages = [] } = useVillages();
+  const [villageSearch, setVillageSearch] = useState("");
   const [riskScore, setRiskScore] = useState(85);
   const [waterLevel, setWaterLevel] = useState(0.095866);
   const [officerId, setOfficerId] = useState(officers[0]?.id ?? "");
@@ -119,18 +131,28 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
   const rl = riskLabel(riskScore);
 
   const dispatch = async () => {
+    if (!villageSearch.trim()) {
+      toast.error("Please select or enter a village name");
+      return;
+    }
+    
+    // Attempt to find village ID if they picked from the list, otherwise use a placeholder
+    const matchedVillage = villages.find(v => v.name.toLowerCase() === villageSearch.toLowerCase());
+    const finalVillageId = matchedVillage ? matchedVillage.id : "manual-entry";
+    
     setLoading(true);
     try {
       const r = await fetch(`${API}/api/alerts/dispatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          villageId,
+          villageId: finalVillageId,
           riskScore,
           anomalyScore: riskScore >= 80 ? 0.85 : null,
           officerEmail: selectedOfficer?.email,
           officer: selectedOfficer?.name,
           waterLevel,
+          village: villageSearch,
         }),
       });
       const data = await r.json();
@@ -155,8 +177,19 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
         {/* Controls */}
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Village ID</label>
-            <Input value={villageId} onChange={(e) => setVillageId(e.target.value)} placeholder="e.g. v1" />
+            <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Village Name</label>
+            <Input 
+              value={villageSearch} 
+              onChange={(e) => setVillageSearch(e.target.value)} 
+              placeholder="e.g. Mehsana" 
+              list="village-list"
+              autoComplete="off"
+            />
+            <datalist id="village-list">
+              {villages.map((v) => (
+                <option key={v.id} value={v.name} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -210,7 +243,7 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
               <span className="font-bold text-foreground">HydroMind AI — Groundwater Alert</span>
             </div>
             <div className="mt-2 rounded-md bg-background/60 p-3 space-y-1.5">
-              <p><span className="text-muted-foreground">📍 Village:</span> <strong>{villageId}</strong></p>
+              <p><span className="text-muted-foreground">📍 Village:</span> <strong>{villageSearch || "Unknown"}</strong></p>
               <p><span className="text-muted-foreground">⚠️ Risk Score:</span> <strong className={riskScore >= 75 ? "text-red-400" : "text-yellow-400"}>{riskScore}%</strong></p>
               <p><span className="text-muted-foreground">💧 Water Level:</span> <strong>{(waterLevel * 3.28084).toFixed(3)} ft bgl</strong></p>
               <p><span className="text-muted-foreground">👮 Officer:</span> <strong>{selectedOfficer?.name ?? "—"}</strong></p>
