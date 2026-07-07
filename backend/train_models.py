@@ -120,7 +120,7 @@ def train_from_csvs():
                         if not (-50 < val < 150):
                             continue
                         yr, mo = parsed
-                        if yr < RECENT_FROM:
+                        if yr < 1991:
                             continue
                         district_rows.setdefault(district, []).append((yr, mo, val))
                     except ValueError:
@@ -135,8 +135,14 @@ def train_from_csvs():
         if len(rows) < 8:
             continue
 
-        years  = np.array([r[0] for r in rows], dtype=float).reshape(-1, 1)
-        levels = np.array([r[2] for r in rows], dtype=float)
+        # Only use recent data (2005+) for the ML trend model
+        recent_rows = [r for r in rows if r[0] >= RECENT_FROM]
+        if len(recent_rows) < 8:
+            # Fallback to all rows if not enough recent data
+            recent_rows = rows
+            
+        years  = np.array([r[0] for r in recent_rows], dtype=float).reshape(-1, 1)
+        levels = np.array([r[2] for r in recent_rows], dtype=float)
 
         split = max(int(len(years) * 0.8), 6)
         X_tr, X_te = years[:split], years[split:]
@@ -147,7 +153,7 @@ def train_from_csvs():
         preds = m.predict(X_te)
         r2 = float(r2_score(y_te, preds)) if len(y_te) > 1 else 0.0
 
-        # Retrain on full data for best slope
+        # Retrain on full recent data for best slope
         m.fit(years, levels)
         slope = float(m.coef_[0])
 
