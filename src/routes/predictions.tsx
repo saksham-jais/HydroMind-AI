@@ -161,10 +161,7 @@ function DistrictForecastChart({ district }: { district: string }) {
           <YAxis reversed tick={{ fontSize: 10 }} tickLine={false}
             tickFormatter={(v) => `${Math.round(v)}ft`} domain={['auto', 'auto']} />
           <RechartTooltip
-            formatter={(val: any, name: string) => {
-              const lbl = name === "historical" ? "ML Trend (Past)" : name === "actual" ? "Actual (CSV)" : "ML Forecast";
-              return [`${Number(val).toFixed(1)} ft bgl`, lbl];
-            }}
+            formatter={(val: any, name: string) => [`${Number(val).toFixed(1)} ft bgl`, name]}
             labelFormatter={(l) => `Year: ${l}`}
             contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 11 }}
           />
