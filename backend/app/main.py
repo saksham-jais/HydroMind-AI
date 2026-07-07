@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.ml.predictor import predictor
-from app.routers import alerts, chat, iot, predictions, villages, analysis, auth
+from app.routers import alerts, chat, iot, predictions, villages, analysis, auth, officers
 
 
 @asynccontextmanager
@@ -36,6 +36,7 @@ app.include_router(iot.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(analysis.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(officers.router, prefix="/api")
 
 
 @app.get("/api/health")
