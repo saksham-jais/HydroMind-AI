@@ -2,6 +2,7 @@
 HydroMind AI Analysis Router
 Multi-agent groundwater analysis using real CGWB datasets + Gemini 1.5 Flash
 """
+# Triggering reload
 from fastapi import APIRouter
 from pydantic import BaseModel
 from app.config import settings
@@ -228,7 +229,7 @@ async def get_map_data():
 async def get_all_districts_forecast_year(year: int = 2025):
     """Return ML-predicted depth & risk score for ALL districts at a given future year.
     Used to power the animated timeline map playback."""
-    models, slopes, accuracy, reports = _load_forecast_data()
+    models, slopes, accuracy, reports, actuals = _load_forecast_data()
     
     ALIASES_REVERSE = {v: k for k, v in {
         "Mehsana": "Mahesana",
