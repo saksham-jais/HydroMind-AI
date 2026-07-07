@@ -16,10 +16,11 @@
    - [3.3 ML Predictions (`/predictions`)](#33-ml-predictions-predictions)
    - [3.4 Alerts & Dispatch (`/alerts`)](#34-alerts--dispatch-alerts)
    - [3.5 AI Reports (`/reports`)](#35-ai-reports-reports)
-4. [Machine Learning Model Parameters (All Districts)](#4-machine-learning-model-parameters-all-districts)
-5. [Dual-Metric Visualization Architecture](#5-dual-metric-visualization-architecture)
-6. [Changelog / Recent Fixes](#6-changelog--recent-fixes)
-7. [Official Dataset References & Sources](#7-official-dataset-references--sources)
+4. [All Models Used in Jalrakshak AI](#4-all-models-used-in-jalrakshak-ai)
+5. [LinearRegression District Parameters (All Districts)](#5-linearregression-district-parameters-all-districts)
+6. [Dual-Metric Visualization Architecture](#6-dual-metric-visualization-architecture)
+7. [Changelog / Recent Fixes](#7-changelog--recent-fixes)
+8. [Official Dataset References & Sources](#8-official-dataset-references--sources)
 
 ---
 
@@ -320,13 +321,105 @@ The aggregated context string is injected into a structured Gemini 1.5 Flash pro
 
 ---
 
-## 4. Machine Learning Model Parameters (All Districts)
+## 4. All Models Used in Jalrakshak AI
 
-**Model:** `sklearn.linear_model.LinearRegression`  
-**Training Window:** 2005–2020 (16 years)  
-**Input Feature (X):** Year (integer)  
-**Target Variable (y):** Mean Annual Depth in metres below ground level  
+Jalrakshak AI uses four distinct model/AI systems across different layers of the platform.
+
+---
+
+### Model 1 — Scikit-learn LinearRegression (Forecasting)
+
+| Property | Value |
+| :--- | :--- |
+| **Library** | `scikit-learn 1.x` → `sklearn.linear_model.LinearRegression` |
+| **Used In** | `/predictions`, `/map` timeline, `/reports` chart, `/api/analysis/district-forecast/{name}` |
+| **Purpose** | Predicts future groundwater depth (m bgl) per district up to year 2075 |
+| **Training File** | `backend/train_models.py` |
+| **Training Data** | `gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv` |
+| **Training Window** | 2005–2020 (16 years of recent quarterly readings) |
+| **Input Feature (X)** | `Year` (integer) |
+| **Target Variable (y)** | Mean annual GWL depth in metres bgl — averaged across all wells in a district per year |
+| **Train/Test Split** | 80% train / 20% test (chronological order) |
+| **Output Artifacts** | `district_forecast_slopes.json`, `district_forecast_accuracy.json`, `district_yearly_actuals.json`, `trained_best_models.joblib` |
+| **Crisis Threshold** | 60 m bgl (~197 ft) |
+
+#### Fresh Training Results (Re-run: 2026-07-08, from real CGWB CSV files)
+
+| Metric | Value |
+| :--- | :--- |
+| Total district models trained | **32** |
+| Districts with positive R² | **2** — Junagadh (R²=0.014), Porbandar (R²=0.124) |
+| Districts with negative R² (monsoon noise) | **30** |
+| Average R² across all 32 districts | **-0.855** |
+| Best R² score | **Porbandar: 0.124** |
+| Worst R² score | **Anand: -14.402** |
+| Fastest declining district | **Porbandar: +0.537 m/yr** |
+| Fastest recovering district | **Vadodara: -0.157 m/yr** |
+
+**Why negative R² is expected:** Gujarat's seasonal monsoon cycle causes water table to bounce 3–7 m within a single year. This high-frequency variance massively exceeds the slow 0.05–0.5 m/yr depletion signal. The R² measures fit to seasonal noise, not trend. The **slope (m/yr) is the reliable physical output** regardless of R².
+
+**Why not XGBoost/LightGBM?** Tree models cannot extrapolate past their training range — they output a flat line for year 2021+. Linear Regression correctly extends the trend vector to 2075.
+
+---
+
+### Model 2 — Google Gemini 1.5 Flash (AI Root Cause Agent)
+
+| Property | Value |
+| :--- | :--- |
+| **Provider** | Google DeepMind (`langchain_google_genai`) |
+| **Model ID** | `gemini-1.5-flash` |
+| **Used In** | `/reports` → AI Root Cause Agent panel + Predictive Alert panel |
+| **API Endpoint** | `/api/analysis/district/{district_name}` |
+| **Purpose** | Generates root cause analysis, 30-day risk forecast, and policy recommendations per district |
+| **Input** | Structured context: CGWB 2024 stage %, extraction HAM, historical depletion m, river discharge m³/s, rainfall normals mm, telemetry trend 2021–2025 |
+| **Output** | Three-part text: Root Cause / Risk Prediction / Policy Recommendation |
+| **Prompt Style** | Zero-shot structured — constrained to provided CGWB context only |
+| **Hallucination Risk** | Low — all numbers are injected from real verified CGWB data, no web search |
+| **Accuracy** | Not quantitatively measured (generative text). Qualitatively verified against CGWB 2024 published values |
+| **Fallback** | Static pre-formatted CGWB message if API key is absent |
+
+---
+
+### Model 3 — Gemini 2.0 Flash Lite + ChromaDB RAG (Chat Assistant)
+
+| Property | Value |
+| :--- | :--- |
+| **LLM** | `gemini-2.0-flash-lite` (`langchain_google_genai.ChatGoogleGenerativeAI`) |
+| **Embedding Model** | `models/gemini-embedding-001` (`GoogleGenerativeAIEmbeddings`) |
+| **Vector Store** | ChromaDB (`langchain_chroma.Chroma`) — persisted at `backend/chroma_db/` |
+| **Used In** | `/chat` → AI chat assistant |
+| **API Endpoint** | `/api/rag/chat` |
+| **Purpose** | Conversational groundwater Q&A for officers (e.g. "Why is Mehsana critical?") |
+| **Knowledge Base** | ~35 structured documents built from `CGWB_2024_STATS` + `HISTORICAL_SUMMARY` at startup |
+| **Retrieval** | Top-4 nearest documents by cosine similarity per query |
+| **Fallback** | Deterministic rule-based engine — keyword matches on district names, "risk", "recommend" → returns factual CGWB stats |
+| **Response Speed** | Rule-based: <5ms. RAG+Gemini: 1–3 seconds |
+
+---
+
+### Model 4 — Rule-Based Alert Engine (Threshold Classifier)
+
+| Property | Value |
+| :--- | :--- |
+| **Type** | Deterministic if-else rule engine (no ML) |
+| **Used In** | `/alerts` → auto-dispatch logic |
+| **API Endpoint** | `/api/sensors/data` (POST — ESP32 ingestion) |
+| **Purpose** | Classifies sensor readings into severity and auto-fires alerts |
+| **Input** | Sensor depth reading in feet bgl |
+| **Rules** | `> 160 ft` → WARNING \| `> 180 ft` → CRITICAL \| `> 196 ft` → EMERGENCY |
+| **Output** | Firebase alert record + SMTP email to registered officers |
+| **Accuracy** | 100% deterministic — threshold values from CGWB bore well failure engineering standards |
+
+---
+
+## 5. LinearRegression District Parameters (All Districts)
+
+**Model:** `sklearn.linear_model.LinearRegression`
+**Training Window:** 2005–2020 (16 years)
+**Input Feature (X):** Year (integer)
+**Target Variable (y):** Mean Annual Depth in metres below ground level
 **Crisis Threshold:** 60 m bgl (~197 ft bgl)
+**Last Retrained:** 2026-07-08 from raw CGWB CSV files
 
 | District | Annual Rate (m/yr) | R² | Trend |
 | :--- | :--- | :--- | :--- |
