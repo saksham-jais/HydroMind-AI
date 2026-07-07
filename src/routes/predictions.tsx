@@ -129,12 +129,6 @@ function DistrictForecastChart({ district }: { district: string }) {
           </div>
           <div className="text-[10px] text-muted-foreground">Annual rate ({forecast.modelType || "LR Model"})</div>
         </div>
-        <div className="text-center">
-          <div className={`text-3xl font-bold tabular-nums ${forecast.r2_accuracy >= 0 ? "text-warning" : "text-muted-foreground"}`}>
-            {forecast.r2_accuracy.toFixed(2)}
-          </div>
-          <div className="text-[10px] text-muted-foreground">R² accuracy ({forecast.r2_accuracy >= 0.5 ? "Good" : forecast.r2_accuracy >= 0 ? "Fair" : "Low fit"})</div>
-        </div>
         <div className="ml-auto">
           <RiskBadge category={forecast.isInCrisis ? (forecast.daysToCrisis < 3650 ? "Critical" : "Over-Exploited") : "Safe"} />
           {forecast.crisisDate !== "Stable" && (
@@ -207,7 +201,6 @@ function AllDistrictsRankingTable() {
             <th className="py-2 pr-3 text-right">Depth 2026 (ft)</th>
             <th className="py-2 pr-3 text-right">Rate ft/yr</th>
             <th className="py-2 pr-3 text-right">Days to Crisis</th>
-            <th className="py-2 text-center">R²</th>
           </tr>
         </thead>
         <tbody>
@@ -232,11 +225,6 @@ function AllDistrictsRankingTable() {
                   ) : (
                     <span className="text-safe">Stable</span>
                   )}
-                </td>
-                <td className="py-1.5 text-center">
-                  <span className={`text-[10px] ${d.r2_accuracy >= 0 ? "text-warning" : "text-muted-foreground"}`}>
-                    {d.r2_accuracy?.toFixed(2)}
-                  </span>
                 </td>
               </tr>
             );
