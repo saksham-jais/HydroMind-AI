@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 
 from app.config import settings
-from app.data.mock_villages import INSIGHTS
-from app.services.firebase import get_alerts, get_totals, get_villages
+from app.services.firebase import get_alerts, get_totals
+from app.services.data_service import CGWB_2024_STATS, get_district_analysis, get_historical_summary
 
 logger = logging.getLogger(__name__)
 
@@ -19,27 +19,23 @@ _retriever = None
 
 def _build_knowledge_docs() -> list[str]:
     docs = []
-    for v in get_villages():
+    # Real dataset: CGWB District groundwater stats
+    for district, stats in CGWB_2024_STATS.items():
+        analysis = get_district_analysis(district)
+        hist = get_historical_summary(district)
         docs.append(
-            f"Village {v['name']} in {v['district']} district: water level {v['waterLevel']} ft, "
-            f"risk score {v['riskScore']}%, 6-month trend {v['trend6mo']}% decline, "
-            f"predicted crisis date {v['predictedCrisisDate']}, officer {v['officer']} ({v['officerEmail']})."
+            f"District {district.title()} (Category: {analysis['category']}): "
+            f"Groundwater extraction stage is {analysis['stage_pct']}%. "
+            f"Historical decadal depletion is {hist.get('depletion', 0)} m. "
+            f"Active monitoring: {analysis['sensors']}. "
+            f"Deficit: {analysis['deficit']}."
         )
-    for insight in INSIGHTS:
-        docs.append(f"AI Insight: {insight}")
-    totals = get_totals()
+    
     docs.append(
-        f"State totals: {totals['villages']} villages monitored, average water level {totals['avgWaterLevel']} ft, "
-        f"{totals['highRisk']} high-risk villages, {totals['activeAlerts']} active alerts."
-    )
-    for a in get_alerts():
-        docs.append(
-            f"Alert {a['id']}: {a['village']} ({a['district']}) risk {a['risk']}%, status {a['status']}, date {a['date']}."
-        )
-    docs.append(
-        "Government guidelines: Monitor borewell extraction permits quarterly. "
-        "Critical threshold is 150 ft below ground. Deploy recharge structures before monsoon. "
-        "District officers must acknowledge alerts within 24 hours."
+        "Gujarat state context (CGWB 2024): Total GW recharge = 27.58 BCM, extraction = 13.86 BCM (54.21%). "
+        "Irrigation accounts for 92% of all GW extraction. "
+        "Over-Exploited districts: Banaskantha (119.81%), Patan (112.1%), Mahesana (109.67%), Gandhinagar (102.67%). "
+        "Critical action: Enforce borewell moratoriums in over-exploited districts."
     )
     return docs
 
@@ -78,37 +74,34 @@ def _init_chroma() -> bool:
 
 def _rule_based(query: str) -> str:
     q = query.lower().strip()
-    villages = get_villages()
     
-    if "mehsana" in q and ("critical" in q or "risk" in q or "why" in q):
-        v = next((v for v in villages if v["name"].lower() == "mehsana"), None)
-        if v:
-            if v["riskScore"] < 50:
-                return f"According to live sensor data, Mehsana is currently SAFE with a low risk score of {v['riskScore']}%. The water level is at {v['waterLevel']} ft."
-            return f"Mehsana is currently at risk! Risk score is {v['riskScore']}%. The water level is at {v['waterLevel']} ft."
+    # Check if a specific district is mentioned in the query
+    for district in CGWB_2024_STATS.keys():
+        if district in q:
+            analysis = get_district_analysis(district)
+            category = analysis['category']
+            stage = analysis['stage_pct']
+            hist = get_historical_summary(district)
+            depletion = hist.get('depletion', 0)
+            
+            if category in ["Over-Exploited", "Critical"]:
+                return f"{district.title()} is currently at high risk ({category})! Groundwater extraction is at {stage}%. The historical decadal depletion is {depletion}m. Immediate action is recommended."
+            elif category == "Semi-Critical":
+                return f"{district.title()} is Semi-Critical. Extraction is at {stage}%. Monitor closely as the decadal trend shows {depletion}m change."
+            else:
+                return f"{district.title()} is in the Safe category with extraction at {stage}%. The trend is stable ({depletion}m decadal change)."
 
-    if "risk" in q or "critical" in q:
-        top = sorted(villages, key=lambda v: v.get("riskScore", 0), reverse=True)[:3]
-        names = ", ".join(f"{v['name']} ({v.get('riskScore', 0)}%)" for v in top)
-        return f"Based on live sensor data, the highest risk villages currently are: {names}."
+    if "risk" in q or "critical" in q or "over-exploited" in q:
+        top = [d for d, s in CGWB_2024_STATS.items() if s['stage'] >= 100]
+        names = ", ".join(d.title() for d in top)
+        return f"Based on CGWB 2024 dataset, the Over-Exploited (highest risk) districts are: {names}. They require immediate intervention."
 
-    if "inspection" in q or "actions" in q:
-        high_risk = [v for v in villages if v.get("riskScore", 0) >= 80]
-        if not high_risk:
-            return "Based on real-time data, no villages currently require immediate inspection."
-        names = ", ".join(v['name'] for v in high_risk)
-        return f"Top inspection priority (composite risk ≥80%): {names}. Field officers have been notified."
+    if "actions" in q or "recommend" in q:
+        return "For Over-Exploited districts, CGWB recommends: Enforcing groundwater regulation, promoting micro-irrigation, and building artificial recharge structures like check dams."
 
-    if "alert" in q:
-        alerts = get_alerts()
-        pending = [a for a in alerts if a.get("status") == "pending"]
-        return f"There are {len(alerts)} total alerts, {len(pending)} pending dispatch via n8n."
-
-    totals = get_totals()
     return (
-        f"HydroMind monitors {totals.get('villages', 0)} Gujarat villages. "
-        f"Average water level is {totals.get('avgWaterLevel', 0)} ft with {totals.get('highRisk', 0)} high-risk zones. "
-        "Ask about specific villages, risk zones, alerts, or recommended actions."
+        "HydroMind monitors 33 Gujarat districts using the official CGWB dataset. "
+        "Ask about specific districts (e.g., 'Why is Mehsana critical?'), highest risk zones, or recommended actions."
     )
 
 
