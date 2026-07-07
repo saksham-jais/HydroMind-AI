@@ -1,6 +1,6 @@
-# Jalrakshak AI — Complete Project Documentation
+# HydroMind AI — Complete Project Documentation
 
-> **Platform:** Jalrakshak AI (formerly HydroMind AI)  
+> **Platform:** HydroMind AI (formerly HydroMind AI)  
 > **Purpose:** Groundwater Depletion Early-Warning & Analytics Platform for Gujarat  
 > **Stack:** FastAPI + React (Vite) + Firebase + ESP32 + Gemini 1.5 Flash  
 > **Data Coverage:** 1950–2024 (CGWB) + Live ESP32 IoT Telemetry
@@ -18,7 +18,7 @@
    - [3.5 AI Reports (`/reports`)](#35-ai-reports-reports)
    - [3.6 AI Chat Assistant (`/chat`)](#36-ai-chat-assistant-chat)
 4. [AI Agent Pipeline — Deep Dive](#4-ai-agent-pipeline--deep-dive)
-5. [All Models Used in Jalrakshak AI](#5-all-models-used-in-jalrakshak-ai)
+5. [All Models Used in HydroMind AI](#5-all-models-used-in-jalrakshak-ai)
 6. [LinearRegression District Parameters (All Districts)](#6-linearregression-district-parameters-all-districts)
 7. [Dual-Metric Visualization Architecture](#7-dual-metric-visualization-architecture)
 8. [Changelog / Recent Fixes](#8-changelog--recent-fixes)
@@ -28,7 +28,7 @@
 
 ## 1. Project Overview
 
-**Jalrakshak AI** is a comprehensive groundwater analytics and early-warning platform built for district-level government officers in the state of Gujarat, India. It aggregates:
+**HydroMind AI** is a comprehensive groundwater analytics and early-warning platform built for district-level government officers in the state of Gujarat, India. It aggregates:
 - Real-time IoT sensor data (ESP32 ultrasonic sensors via Firebase)
 - Official Central Ground Water Board (CGWB) records spanning 1950–2024
 - ML-generated future depletion forecasts up to 2075
@@ -361,7 +361,7 @@ The Chat page is a dedicated conversational interface that allows government off
 
 ## 4. AI Agent Pipeline — Deep Dive
 
-The most complex AI system in Jalrakshak AI is the **3-Agent Sequential Pipeline** that runs on the `/reports` page. When an officer selects a district, this pipeline fires to produce the AI Root Cause Analysis and Predictive Alert panels.
+The most complex AI system in HydroMind AI is the **3-Agent Sequential Pipeline** that runs on the `/reports` page. When an officer selects a district, this pipeline fires to produce the AI Root Cause Analysis and Predictive Alert panels.
 
 ### How the Pipeline Works
 
@@ -432,9 +432,9 @@ If Gemini API is rate-limited or unavailable, the pipeline serves pre-computed f
 
 ---
 
-## 5. All Models Used in Jalrakshak AI
+## 5. All Models Used in HydroMind AI
 
-Jalrakshak AI uses four distinct model/AI systems across different layers of the platform.
+HydroMind AI uses four distinct model/AI systems across different layers of the platform.
 
 ---
 
@@ -573,7 +573,7 @@ Jalrakshak AI uses four distinct model/AI systems across different layers of the
 
 ## 5. Dual-Metric Visualization Architecture
 
-Jalrakshak AI separates its analytics into two paradigms that should never be confused:
+HydroMind AI separates its analytics into two paradigms that should never be confused:
 
 ### Paradigm A — Sustainability Index (Map Zone Colors)
 - **Source:** CGWB 2024 extraction stage percentage
@@ -613,7 +613,7 @@ Jalrakshak AI separates its analytics into two paradigms that should never be co
 
 ## 7. Official Dataset References & Sources
 
-All datasets used in Jalrakshak AI are sourced from the **National Water Data Portal (NWDP)** maintained by the **National Water Informatics Centre (NWIC)**, Ministry of Jal Shakti, Government of India.
+All datasets used in HydroMind AI are sourced from the **National Water Data Portal (NWDP)** maintained by the **National Water Informatics Centre (NWIC)**, Ministry of Jal Shakti, Government of India.
 
 ### Primary Datasets
 
