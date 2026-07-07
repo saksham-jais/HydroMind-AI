@@ -43,7 +43,7 @@ export const Route = createFileRoute("/reports")({
 });
 
 function Reports() {
-  const [district, setDistrict] = useState("Mehsana");
+  const [district, setDistrict] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +54,7 @@ function Reports() {
       if (!res.ok) throw new Error("Failed to fetch analysis");
       return res.json();
     },
+    enabled: !!district,
   });
 
   const handleDownload = async () => {
@@ -251,6 +252,12 @@ function Reports() {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 animate-pulse">Running 3-Agent AI Analysis...</p>
             <p className="text-xs text-muted-foreground mt-1">Root Cause · Risk Prediction · Policy Recommendation</p>
           </div>
+        </div>
+      ) : !district ? (
+        <div className="flex h-[400px] flex-col items-center justify-center text-center text-muted-foreground border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl mt-6">
+          <MapPin className="h-10 w-10 mb-4 opacity-20" />
+          <p className="text-base font-medium text-gray-700 dark:text-gray-300">No district selected</p>
+          <p className="text-sm opacity-70 mt-1 max-w-sm">Please select a district from the dropdown above to generate the full AI analysis report.</p>
         </div>
       ) : (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
