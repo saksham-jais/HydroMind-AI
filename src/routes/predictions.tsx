@@ -77,7 +77,7 @@ function RiskBadge({ category }: { category: string }) {
   return <span className={`rounded px-2 py-0.5 text-[10px] font-medium ${c.cls}`}>{c.label}</span>;
 }
 
-function DistrictForecastChart({ district }: { district: string }) {
+export function DistrictForecastChart({ district, hideKpis = false, height = 220 }: { district: string; hideKpis?: boolean; height?: number }) {
   const { data: forecast, isLoading } = useForecast(district);
 
   const chartData = useMemo(() => {
@@ -111,7 +111,8 @@ function DistrictForecastChart({ district }: { district: string }) {
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-4">
+      {!hideKpis && (
+        <div className="mb-3 flex flex-wrap items-center gap-4">
         <div className="text-center">
           <div className="text-3xl font-bold tabular-nums">{(forecast.currentDepth_m * 3.28084).toFixed(1)}<span className="text-base font-normal text-muted-foreground"> ft</span></div>
           <div className="text-[10px] text-muted-foreground">Predicted 2026 depth</div>
@@ -136,8 +137,9 @@ function DistrictForecastChart({ district }: { district: string }) {
           )}
         </div>
       </div>
+      )}
 
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={height}>
         <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">

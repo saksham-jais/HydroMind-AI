@@ -11,6 +11,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { useQuery } from "@tanstack/react-query";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { DistrictForecastChart } from "./predictions";
 
 const districts = [
   "Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar",
@@ -325,40 +326,19 @@ function Reports() {
                 <div>
                   <h3 className="text-xl font-bold flex items-center gap-2 text-gray-800 dark:text-gray-100">
                     <TrendingDown className="h-5 w-5 text-blue-500" />
-                    Groundwater Level — {district}
+                    Groundwater Depth Forecast — {district}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Seasonal profile derived from 70-year CGWB quarterly GWL (1950–2020)
+                    Linear trend extrapolation using CGWB 1991–2020 dataset to predict 60m crisis timeline.
                   </p>
                 </div>
-                <span className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
-                  Real Data
+                <span className="bg-blue-500/10 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-semibold border border-blue-200 dark:border-blue-800">
+                  ML Forecast
                 </span>
               </div>
 
-              <div ref={chartRef} className="flex-1 min-h-[320px] w-full bg-white dark:bg-card">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={analysisData?.data || []} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorLevel" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{fontSize: 11, fill: '#6b7280'}} dy={8} />
-                    <YAxis tickLine={false} axisLine={false} tick={{fontSize: 11, fill: '#6b7280'}} dx={-4}
-                      tickFormatter={(v) => `${Math.abs(v)}m`} />
-                    <RechartsTooltip
-                      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', fontSize: 12 }}
-                      formatter={(value: any) => [`${Math.abs(value).toFixed(1)} m below ground`, 'Water Table']}
-                    />
-                    <ReferenceLine y={-10} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5}
-                      label={{ value: "Warning threshold", fill: "#f59e0b", fontSize: 9, position: "right" }} />
-                    <Area type="monotone" dataKey="level" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorLevel)" dot={{ r: 3, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 5 }} />
-                    <Line type="monotone" dataKey="level" stroke="#2563eb" strokeWidth={0} dot={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
+              <div ref={chartRef} className="flex-1 w-full bg-white dark:bg-card">
+                <DistrictForecastChart district={district} hideKpis={true} height={320} />
               </div>
             </Card>
 
