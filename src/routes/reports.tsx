@@ -135,7 +135,7 @@ function Reports() {
       // AI Root Cause
       doc.setFillColor(239,246,255);
       doc.setFontSize(9); doc.setFont("helvetica","normal");
-      const reasonLines = doc.splitTextToSize(analysisData.reason, pw - m*2 - 14);
+      const reasonLines = doc.splitTextToSize(analysisData.reason || "No analysis available.", pw - m*2 - 14);
       const rH = reasonLines.length * 5.5 + 18;
       doc.roundedRect(m, y, pw-m*2, rH, 3, 3, "F");
       doc.setFillColor(59,130,246); doc.roundedRect(m, y, 4, rH, 1, 1, "F");
@@ -148,7 +148,7 @@ function Reports() {
       // AI Prediction
       doc.setFillColor(255,251,235);
       doc.setFontSize(9); doc.setFont("helvetica","normal");
-      const predLines = doc.splitTextToSize(analysisData.prediction, pw-m*2-14);
+      const predLines = doc.splitTextToSize(analysisData.prediction || "No prediction available.", pw-m*2-14);
       const pH = predLines.length * 5.5 + 18;
       doc.roundedRect(m, y, pw-m*2, pH, 3, 3, "F");
       doc.setFillColor(245,158,11); doc.roundedRect(m, y, 4, pH, 1, 1, "F");
@@ -192,6 +192,9 @@ function Reports() {
       doc.text("HydroMind AI  •  Powered by Gemini 1.5 Flash  •  CGWB 2024 + 70yr Historical Dataset  •  Predict. Alert. Prevent.", pw/2, footerY+5, {align:"center"});
 
       doc.save(`${district}_HydroMind_CGWB2024_Report.pdf`);
+    } catch (err: any) {
+      console.error("PDF generation failed:", err);
+      alert("Error generating PDF: " + (err.message || "Unknown error"));
     } finally {
       setIsGenerating(false);
     }
