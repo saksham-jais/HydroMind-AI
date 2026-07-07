@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
+const envUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || "http://127.0.0.1:8000";
+export const API_BASE = `${envUrl}/api`;
 
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {

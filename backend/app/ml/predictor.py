@@ -102,6 +102,40 @@ class Predictor:
             "confidence": confidence,
         }
 
+    def _generate_ai_anomaly_reason(self, village_name: str, district: str, score: float, risk: float, trend: float) -> str:
+        if not hasattr(self, "_ai_anomaly_cache"):
+            self._ai_anomaly_cache = {}
+            
+        cache_key = f"{village_name}_{score}_{trend}"
+        if cache_key in self._ai_anomaly_cache:
+            return self._ai_anomaly_cache[cache_key]
+            
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=settings.gemini_api_key)
+            
+            prompt = f"""
+            You are an AI groundwater analyst for the Gujarat government.
+            Generate a concise, realistic, 1-sentence explanation (max 12 words) for a groundwater anomaly detected by our Isolation Forest sensor model.
+            
+            Context:
+            - Village: {village_name}
+            - District: {district}
+            - Anomaly Score: {score}/1.0 (Higher means more anomalous)
+            - Risk Level: {risk}% (Overall long-term depletion risk)
+            - 6-month Trend: {trend}% decline
+            
+            Consider the region's characteristics (e.g., Ahmedabad might be industrial over-extraction, Banaskantha might be agricultural/irrigation overuse, Kutch might be saline intrusion or deep borewell pumping).
+            Do not use quotes. Be professional and specific.
+            """
+            
+            response = llm.invoke(prompt)
+            text = response.content.strip().strip('"').strip("'")
+            self._ai_anomaly_cache[cache_key] = text
+            return text
+        except Exception as e:
+            return "Abnormal water level fluctuation detected by sensor network"
+
     def anomalies(self, village_id: str | None = None) -> list[dict]:
         self._ensure_models()
         results = []
@@ -109,17 +143,22 @@ class Predictor:
         villages = [self._village(village_id)] if village_id else get_villages()[:6]
 
         types = ["sudden_drop", "abnormal_extraction", "sensor_spike"]
-        descriptions = [
-            "Water level dropped faster than seasonal norm",
-            "Night-time extraction pattern detected",
-            "HC-SR04 sensor reported erratic readings",
-        ]
 
         for i, v in enumerate(villages):
             X = np.array([[v["waterLevel"], 65.0, 32.0, v["trend6mo"]]])
             score_raw = self._iso.decision_function(X)[0]
             anomaly_score = round(max(0, min(1, 0.5 - score_raw)), 2)
             flagged = anomaly_score >= 0.7 or v["riskScore"] >= 80
+            
+            # Use Gemini to generate a context-aware reason
+            description = self._generate_ai_anomaly_reason(
+                village_name=v["name"], 
+                district=v["district"], 
+                score=anomaly_score, 
+                risk=v["riskScore"], 
+                trend=v["trend6mo"]
+            )
+            
             results.append({
                 "id": f"AN-{i+1:03d}",
                 "villageId": v["id"],
@@ -127,7 +166,7 @@ class Predictor:
                 "district": v["district"],
                 "score": anomaly_score,
                 "type": types[i % 3],
-                "description": descriptions[i % 3],
+                "description": description,
                 "date": datetime.now().strftime("%Y-%m-%d"),
                 "flagged": flagged,
             })

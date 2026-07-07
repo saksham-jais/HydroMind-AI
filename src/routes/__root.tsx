@@ -7,6 +7,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Chatbot } from "@/components/chatbot";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/components/auth-provider";
+import { LoginPage } from "@/components/login-page";
 
 function NotFoundComponent() {
   return (
@@ -76,12 +78,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+function AppContent() {
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState(new Date());
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    setMounted(true);
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginPage />
+        <Toaster />
+      </>
+    );
+  }
+
+  return (
+    <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar />
           <div className="flex flex-1 flex-col">
@@ -94,11 +121,11 @@ function RootComponent() {
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <div className="hidden items-center gap-1.5 rounded-full bg-safe/15 px-2.5 py-1 text-[10px] font-medium text-safe sm:flex">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" /> System Live
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" /> Live Data Sync
                 </div>
                 <div className="hidden text-right text-[10px] text-muted-foreground sm:block">
-                  <div>Last sync</div>
-                  <div className="font-mono">{new Date().toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}</div>
+                  <div>Updated just now</div>
+                  <div className="font-mono">{now.toLocaleString("en-IN", { dateStyle: "short", timeStyle: "medium" })}</div>
                 </div>
               </div>
             </header>
@@ -110,6 +137,5 @@ function RootComponent() {
         {mounted && <Chatbot />}
         <Toaster />
       </SidebarProvider>
-    </QueryClientProvider>
   );
 }

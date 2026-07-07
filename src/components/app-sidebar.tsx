@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Map, TrendingUp, Bell, MessageSquare, FileText, Droplets } from "lucide-react";
+import { LayoutDashboard, Map, TrendingUp, Bell, MessageSquare, FileText, Droplets, LogOut } from "lucide-react";
+import { useAuth } from "./auth-provider";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +25,7 @@ const items = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { logout, user } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -58,7 +60,15 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="px-2 py-2 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={logout} tooltip="Sign out">
+              <LogOut className="text-muted-foreground" />
+              <span className="text-muted-foreground">Sign out ({user?.userid})</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <div className="px-2 pb-2 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
           Govt. of Gujarat · v0.1
         </div>
       </SidebarFooter>

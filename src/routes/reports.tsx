@@ -49,7 +49,7 @@ function Reports() {
   const { data: analysisData, isLoading } = useQuery({
     queryKey: ["districtAnalysis", district],
     queryFn: async () => {
-      const res = await fetch(`http://127.0.0.1:8000/api/analysis/district/${district}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/analysis/district/${district}`);
       if (!res.ok) throw new Error("Failed to fetch analysis");
       return res.json();
     },

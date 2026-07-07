@@ -223,6 +223,76 @@ async def get_map_data():
         })
     return map_data
 
+@router.get("/analysis/districts/forecast-year")
+async def get_all_districts_forecast_year(year: int = 2025):
+    """Return ML-predicted depth & risk score for ALL districts at a given future year.
+    Used to power the animated timeline map playback."""
+    models, slopes, accuracy, reports = _load_forecast_data()
+    
+    ALIASES_REVERSE = {v: k for k, v in {
+        "Mehsana": "Mahesana",
+        "Dahod": "Dohad",
+        "Chhotaudepur": "Chhota Udaipur",
+        "Devbhumidwarka": "Devbhumi Dwarka",
+    }.items()}
+    
+    CRISIS_THRESHOLD = 60.0
+    result = []
+    
+    for d in DISTRICT_COORDS:
+        name = d["name"]
+        # Try exact match, then alias
+        model_key = name
+        if model_key not in models:
+            # Try title case
+            model_key = name.strip().title()
+        if model_key not in models:
+            # Try alias reverse lookup
+            model_key = ALIASES_REVERSE.get(name, name)
+        
+        model_info = models.get(model_key)
+        slope = slopes.get(model_key, 0)
+        
+        if model_info:
+            predicted_depth = abs(_predict_year(model_info, year))
+        else:
+            # Fallback: use current avg + slope estimate
+            current = abs(get_historical_summary(name).get("avg_post2010", 10.0))
+            current_year = 2025
+            predicted_depth = current + slope * (year - current_year)
+        
+        predicted_depth = max(0, predicted_depth)
+        
+        # Convert depth to risk score (0-100)
+        # 0-10m = safe (30), 10-20m = semi-critical (55), 20-40m = critical (75), 40m+ = over-exploited (90+)
+        if predicted_depth > 40:
+            risk_score = min(100, 85 + (predicted_depth - 40) * 0.5)
+            category = "Over-Exploited"
+        elif predicted_depth > 20:
+            risk_score = 70 + (predicted_depth - 20) * 0.75
+            category = "Critical"
+        elif predicted_depth > 10:
+            risk_score = 50 + (predicted_depth - 10) * 2.0
+            category = "Semi-Critical"
+        else:
+            risk_score = max(10, predicted_depth * 3)
+            category = "Safe"
+        
+        result.append({
+            "id": d["id"],
+            "name": name,
+            "lat": d["lat"],
+            "lng": d["lng"],
+            "predictedDepth_m": round(predicted_depth, 2),
+            "riskScore": round(risk_score, 1),
+            "category": category,
+            "annualDeclineRate_m": round(slope, 3),
+            "yearsToCrisis": round((CRISIS_THRESHOLD - predicted_depth) / slope, 1) if slope > 0 else 9999,
+        })
+    
+    return result
+
+
 @router.get("/analysis/state-trend")
 async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
     """Return statewide average GWL per month aggregated over a year range."""
@@ -285,22 +355,53 @@ async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
 _MODELS_CACHE = None
 _SLOPES_CACHE = None
 _ACCURACY_CACHE = None
+_REPORTS_CACHE = None
 
 def _load_forecast_data():
-    global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE
+    global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE
     if _MODELS_CACHE is None:
-        models_path = DS / 'trained_linear_models.joblib'
+        models_path = DS / 'trained_best_models.joblib'
+        legacy_path = DS / 'trained_linear_models.joblib'
         slopes_path = DS / 'district_forecast_slopes.json'
         accuracy_path = DS / 'district_forecast_accuracy.json'
-        _MODELS_CACHE = joblib.load(models_path) if models_path.exists() else {}
+        reports_path = DS / 'model_comparison_report.json'
+        
+        if models_path.exists():
+            _MODELS_CACHE = joblib.load(models_path)
+        elif legacy_path.exists():
+            # Wrap legacy LR models in the new dict format
+            legacy = joblib.load(legacy_path)
+            _MODELS_CACHE = {k: {"model": v, "type": "LinearRegression", "features": "year_only"} for k, v in legacy.items()}
+        else:
+            _MODELS_CACHE = {}
+            
         _SLOPES_CACHE = json.load(open(slopes_path)) if slopes_path.exists() else {}
         _ACCURACY_CACHE = json.load(open(accuracy_path)) if accuracy_path.exists() else {}
-    return _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE
+        _REPORTS_CACHE = json.load(open(reports_path)) if reports_path.exists() else {}
+    return _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE
+
+def _predict_year(model_info, year: int) -> float:
+    """Run prediction handling both year-only LR and full-feature ML models."""
+    m = model_info["model"]
+    ftype = model_info.get("features", "year_only")
+    
+    if ftype == "year_only":
+        return float(m.predict([[year]])[0])
+    else:
+        # Full features: [year, month, sin_m, cos_m, season]
+        import numpy as np
+        # Predict at mid-year (June) for annual average
+        mo = 6
+        sin_m = np.sin(2 * np.pi * mo / 12)
+        cos_m = np.cos(2 * np.pi * mo / 12)
+        season = 1.0 # June is monsoon season
+        X = np.array([[year, mo, sin_m, cos_m, season]])
+        return float(m.predict(X)[0])
 
 @router.get("/analysis/district-forecast/{name}")
 async def get_district_forecast(name: str, cgwb_category: str = ""):
-    """Use trained Linear Regression model to predict when a district will hit the crisis threshold."""
-    models, slopes, accuracy = _load_forecast_data()
+    """Use trained ML ensemble model to predict when a district will hit the crisis threshold."""
+    models, slopes, accuracy, reports = _load_forecast_data()
     
     # Name alias map: frontend name -> CSV training name
     ALIASES = {
@@ -314,26 +415,25 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
     # Apply alias if needed
     district_key = ALIASES.get(district_key, district_key)
     
-    model = models.get(district_key)
+    model_info = models.get(district_key)
     slope = slopes.get(district_key)
     r2 = accuracy.get(district_key, 0.0)
     
-    if model is None or slope is None:
+    if model_info is None or slope is None:
         return {"error": f"No trained model for district: {district_key}", "available": list(models.keys())}
     
     CRISIS_THRESHOLD = 60.0
     
     current_year = datetime.now().year
-    predicted_now = float(model.predict([[current_year]])[0])
+    predicted_now = _predict_year(model_info, current_year)
     
     hist = get_historical_summary(district_key)
     real_avg = hist.get("avg_post2010", predicted_now)
     
     hist_years = list(range(1991, 2021))
-    hist_levels = [round(float(model.predict([[y]])[0]), 2) for y in hist_years]
+    hist_levels = [round(_predict_year(model_info, y), 2) for y in hist_years]
     
     # --- Crisis Logic: Use CGWB official category as primary signal ---
-    # If CGWB says Over-Exploited or Critical, the district IS in decline regardless of LR slope
     cgwb_cat_lower = cgwb_category.lower()
     is_officially_critical = cgwb_cat_lower in ("over-exploited", "critical")
     
@@ -341,7 +441,7 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
     depth = abs(predicted_now)
     
     if is_officially_critical or slope > 0:
-        # Use the higher of the two annual rates (official category vs LR slope)
+        # Use the higher of the two annual rates (official category vs ML slope)
         effective_slope = max(slope, 1.0) if is_officially_critical and slope <= 0 else slope
         distance = max(0, CRISIS_THRESHOLD - depth)
         if distance > 0:
@@ -357,6 +457,7 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
     
     return {
         "district": district_key,
+        "modelType": model_info.get("type", "LinearRegression"),
         "currentDepth_m": round(depth, 2),
         "realAvgDepth_m": round(real_avg, 2),
         "annualDeclineRate_m": round(slope, 3),

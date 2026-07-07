@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { API_BASE } from "@/lib/api/client";
 import { AlertTriangle, TrendingDown, TrendingUp, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -12,7 +13,7 @@ export function CrisisCountdown({
   const { data: forecast, isLoading } = useQuery({
     queryKey: ["districtForecast", district, category],  // include category so it refetches on change
     queryFn: async () => {
-      const url = `http://127.0.0.1:8000/api/analysis/district-forecast/${encodeURIComponent(district)}?cgwb_category=${encodeURIComponent(category)}`;
+      const url = `${API_BASE}/analysis/district-forecast/${encodeURIComponent(district)}?cgwb_category=${encodeURIComponent(category)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Forecast fetch failed");
       return res.json();
@@ -46,8 +47,8 @@ export function CrisisCountdown({
             <div>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Predicted Depth</p>
               <p className="mt-1 text-2xl font-semibold tabular-nums">
-                {Math.abs(forecast.currentDepth_m).toFixed(1)}
-                <span className="text-sm font-normal text-muted-foreground"> m</span>
+                {(Math.abs(forecast.currentDepth_m) * 3.28084).toFixed(1)}
+                <span className="text-sm font-normal text-muted-foreground"> ft</span>
               </p>
             </div>
             <div>
@@ -69,7 +70,7 @@ export function CrisisCountdown({
                 : <TrendingUp className="h-3 w-3 text-safe" />}
               <span>
                 {forecast.annualDeclineRate_m > 0 ? "Declining" : "Recovering"} at{" "}
-                <strong>{Math.abs(forecast.annualDeclineRate_m).toFixed(3)} m/yr</strong> (LR Model)
+                <strong>{(Math.abs(forecast.annualDeclineRate_m) * 3.28084).toFixed(2)} ft/yr</strong> (LR Model)
               </span>
             </div>
             <div className="flex items-center gap-1">

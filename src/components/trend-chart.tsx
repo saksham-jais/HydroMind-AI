@@ -2,6 +2,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { API_BASE } from "@/lib/api/client";
 import { Loader2, BrainCircuit } from "lucide-react";
 
 export function TrendChart({ height = 280 }: { height?: number }) {
@@ -12,7 +13,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
   const { data: trendData, isLoading } = useQuery({
     queryKey: ["stateTrend", startYear, endYear],
     queryFn: async () => {
-      const res = await fetch(`http://127.0.0.1:8000/api/analysis/state-trend?start_year=${startYear}&end_year=${endYear}`);
+      const res = await fetch(`${API_BASE}/analysis/state-trend?start_year=${startYear}&end_year=${endYear}`);
       if (!res.ok) throw new Error("Failed to fetch trend");
       return res.json();
     },
@@ -51,7 +52,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
         const diff = Math.abs(p2.level) - Math.abs(p1.level);
         
         if (Math.abs(diff) < 0.5) {
-          return `Analyzing the selected range from ${selectedMonths[0]} to ${selectedMonths[1]}: The average groundwater level remained relatively stable, fluctuating by only ${Math.abs(diff).toFixed(2)}m (holding near ${Math.abs(p1.level).toFixed(1)}m below ground). This stabilization typically indicates a period where natural recharge and human extraction are relatively balanced, such as the post-monsoon resting phase.`;
+          return `Analyzing the selected range from ${selectedMonths[0]} to ${selectedMonths[1]}: The average groundwater level remained relatively stable, fluctuating by only ${(Math.abs(diff) * 3.28084).toFixed(1)}ft (holding near ${(Math.abs(p1.level) * 3.28084).toFixed(1)}ft below ground). This stabilization typically indicates a period where natural recharge and human extraction are relatively balanced, such as the post-monsoon resting phase.`;
         }
         
         const action = diff > 0 ? "declined" : "recovered";
@@ -59,7 +60,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
           ? "heavy agricultural extraction, particularly for the dry season (summer/Rabi crops), combined with high evaporation rates"
           : "rapid natural recharge driven by intense monsoon precipitation and surface runoff soaking into the aquifers";
         
-        return `Analyzing the selected range from ${selectedMonths[0]} to ${selectedMonths[1]}: The average groundwater level ${action} by ${Math.abs(diff).toFixed(2)}m (moving from ${Math.abs(p1.level).toFixed(1)}m to ${Math.abs(p2.level).toFixed(1)}m below ground). This is primarily driven by ${reason}.`;
+        return `Analyzing the selected range from ${selectedMonths[0]} to ${selectedMonths[1]}: The average groundwater level ${action} by ${(Math.abs(diff) * 3.28084).toFixed(1)}ft (moving from ${(Math.abs(p1.level) * 3.28084).toFixed(1)}ft to ${(Math.abs(p2.level) * 3.28084).toFixed(1)}ft below ground). This is primarily driven by ${reason}.`;
       }
     }
 
@@ -71,7 +72,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
       if (absLvl < minDepth) minDepth = absLvl;
     });
     
-    return `Between ${startYear} and ${endYear}, the state average shows a peak depletion dropping to ${maxDepth.toFixed(1)}m below ground during the summer (May–June) due to intensive agricultural extraction. The aquifers subsequently recharge during the July–September monsoon, recovering to ${minDepth.toFixed(1)}m. Click any two points on the chart to analyze a specific period!`;
+    return `Between ${startYear} and ${endYear}, the state average shows a peak depletion dropping to ${(maxDepth * 3.28084).toFixed(1)}ft below ground during the summer (May–June) due to intensive agricultural extraction. The aquifers subsequently recharge during the July–September monsoon, recovering to ${(minDepth * 3.28084).toFixed(1)}ft. Click any two points on the chart to analyze a specific period!`;
   }, [trendData, selectedMonths, startYear, endYear]);
 
   return (
@@ -79,7 +80,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">Water Level Trend — State Average</h3>
-          <p className="text-xs text-muted-foreground">Depth below ground (meters), {startYear} to {endYear} ({totalMonths} months)</p>
+          <p className="text-xs text-muted-foreground">Depth below ground (feet), {startYear} to {endYear} ({totalMonths} months)</p>
         </div>
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Recharts</span>
       </div>
@@ -126,7 +127,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
           <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }} axisLine={false} tickLine={false} 
-              tickFormatter={(v) => `${Math.abs(v)}m`} />
+              tickFormatter={(v) => `${Math.round(Math.abs(v) * 3.28084)}ft`} />
             <Tooltip
               contentStyle={{
                 background: "var(--color-card)",
@@ -134,7 +135,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(v: any) => [`${Math.abs(v).toFixed(2)} m`, "Avg Depth"]}
+              formatter={(v: any) => [`${(Math.abs(v) * 3.28084).toFixed(1)} ft`, "Avg Depth"]}
             />
           {selectedMonths.map(m => (
             <ReferenceLine key={m} x={m} stroke="var(--color-primary)" strokeDasharray="3 3" strokeWidth={2} />
