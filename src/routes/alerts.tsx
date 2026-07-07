@@ -522,31 +522,7 @@ function AlertsLog() {
   );
 }
 
-// ── Email Config Notice ────────────────────────────────────────────────
-function EmailConfigCard() {
-  return (
-    <Card className="p-4 border-primary/20 bg-primary/5">
-      <div className="flex items-start gap-3">
-        <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <div>
-          <h3 className="text-sm font-semibold">Enable Email Alerts</h3>
-          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-            Add these to <code className="bg-black/20 px-1 rounded">backend/.env</code> to activate direct SMTP email dispatch:
-          </p>
-          <pre className="mt-2 rounded bg-black/30 p-3 text-[11px] text-green-400 overflow-x-auto">{`SMTP_USER=your.email@gmail.com
-SMTP_PASSWORD=your-gmail-app-password
-ALERT_TO_EMAIL=fallback@gujarat.gov.in`}</pre>
-          <p className="mt-2 text-[10px] text-muted-foreground">
-            💡 Use a <strong>Gmail App Password</strong> (not your account password).{" "}
-            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-              Generate one here →
-            </a>
-          </p>
-        </div>
-      </div>
-    </Card>
-  );
-}
+
 
 // ── Main Page ──────────────────────────────────────────────────────────
 function AlertsPage() {
@@ -561,7 +537,6 @@ function AlertsPage() {
         </p>
       </div>
 
-      <EmailConfigCard />
       <DispatchPanel officers={officers} />
       <AlertsLog />
       <OfficerDirectory />
