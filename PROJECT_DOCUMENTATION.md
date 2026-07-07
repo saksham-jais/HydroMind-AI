@@ -1,107 +1,403 @@
-# HydroMind AI - Project Documentation
+# Jalrakshak AI — Complete Project Documentation
 
-## Project Overview
-**HydroMind AI** (formerly HackAarambh/HydroMind AI) is a comprehensive groundwater analytics and early warning platform designed for the state of Gujarat. It aggregates real-time IoT sensor data (via ESP32), official Central Ground Water Board (CGWB) records (1950-2024), and weather patterns to provide an advanced early warning system for groundwater depletion.
-
-The platform assists government officials in answering a critical question: *Which districts are facing groundwater crisis, and what should be done about it?*
-
-## Key Features
-1. **Interactive State Dashboard**: Visualizes state-wide groundwater levels, average depletion rates, and risk zones.
-2. **Machine Learning Predictions**: Projects when specific districts will hit crisis thresholds based on 15 years (2005-2020) of historical data using Linear Trend Extrapolation.
-3. **Agentic RAG Assistant**: A Gemini 1.5 Flash-powered chatbot trained on official CGWB 2024 policy datasets and live sensor telemetry. Uses a rule-based fallback system that queries the live datasets to instantly answer risk assessments.
-4. **IoT Telemetry**: Ingests high-frequency sensor readings (simulated via ESP32) into a Firebase real-time database to track instantaneous water levels.
-5. **Automated Alert Dispatch**: Dispatches warning emails via SMTP with detailed risk parameters and automated recommendations when thresholds are breached.
-
-## Data Workflow & Architecture
-
-### 1. Data Sources
-- **CGWB 2024 Official Stats**: Provides district-level groundwater extraction stage (%), categorization (e.g., Safe, Semi-Critical, Critical, Over-Exploited), and recharge vs. extraction HAM (Hectare Meter) values.
-- **70-Year Historical Data (1950-2020)**: Quarterly manual groundwater level measurements mapped across all districts.
-- **River Discharge Data (2001-2025)**: Daily surface flow metrics used as context for natural recharge rates.
-- **Rainfall Normals**: Historical meteorological normals for each district.
-- **Live IoT Data**: Real-time water level data cached via ESP32 ultrasonic sensors on Firebase.
-
-### 2. Backend (FastAPI)
-The backend acts as the AI processing and data routing layer:
-- **`app/services/data_service.py`**: A low-latency service that pre-computes 70-year decadal trends, recent 2021-2025 telemetry caches, and builds comprehensive AI contexts (combining CGWB stage, extraction deficit, sensor counts, and rainfall).
-- **`app/routers/analysis.py`**: Houses the multi-agent AI pipeline.
-  - *Agent 1 (Root Cause)*: Analyzes drivers of depletion using decadal trends and seasonal bounce.
-  - *Agent 2 (Risk Predictor)*: Classifies 30-day risk and estimates days until shallow aquifer stress.
-  - *Agent 3 (Policy Recommender)*: Maps the findings back to the CGWB 2024 recommendation guidelines (e.g., micro-irrigation mandates).
-- **`app/services/rag.py`**: Runs a fast, dynamic rule-based matching engine that references live `data_service` structures before falling back to full Langchain ChromaDB vectors.
-- **`train_models.py`**: Calculates linear extrapolation slopes and R² scores by processing local CSV files, creating a portable cache of JSON artifacts.
-
-### 3. Frontend (React + Vite + Tailwind)
-- Consumes the FastAPI endpoints to render Recharts-based multi-area visualizations.
-- **Predictions Panel**: Overlays three metrics on a single chart:
-  - *Actual Data*: True, jagged CSV readings (1991-2020).
-  - *ML Trend*: The line of best fit for the historical data.
-  - *ML Forecast*: Forward extrapolation to 2075.
+> **Platform:** Jalrakshak AI (formerly HydroMind AI)  
+> **Purpose:** Groundwater Depletion Early-Warning & Analytics Platform for Gujarat  
+> **Stack:** FastAPI + React (Vite) + Firebase + ESP32 + Gemini 1.5 Flash  
+> **Data Coverage:** 1950–2024 (CGWB) + Live ESP32 IoT Telemetry
 
 ---
 
-## Machine Learning Forecast Model Parameters
+## Table of Contents
+1. [Project Overview](#1-project-overview)
+2. [Raw Datasets Used](#2-raw-datasets-used)
+3. [Page-by-Page Feature Documentation](#3-page-by-page-feature-documentation)
+   - [3.1 Overview Dashboard (`/`)](#31-overview-dashboard-)
+   - [3.2 Interactive Map (`/map`)](#32-interactive-map-map)
+   - [3.3 ML Predictions (`/predictions`)](#33-ml-predictions-predictions)
+   - [3.4 Alerts & Dispatch (`/alerts`)](#34-alerts--dispatch-alerts)
+   - [3.5 AI Reports (`/reports`)](#35-ai-reports-reports)
+4. [Machine Learning Model Parameters (All Districts)](#4-machine-learning-model-parameters-all-districts)
+5. [Dual-Metric Visualization Architecture](#5-dual-metric-visualization-architecture)
+6. [Changelog / Recent Fixes](#6-changelog--recent-fixes)
 
-HydroMind AI uses **Linear Trend Extrapolation** (Scikit-learn `LinearRegression`) focused on the 2005–2020 dataset block. While gradient boosters fail to extrapolate trends smoothly into the future (they plateau), linear extrapolation accurately captures the continuous annual decline rate (meters per year) to predict when shallow bore wells will run dry (~60m threshold).
+---
 
-Below are the computed annual decline rates (Slope) and R² accuracy scores for all 32 tracked districts:
+## 1. Project Overview
 
-| District | Annual Rate (m/yr) | R² Accuracy | Trend |
+**Jalrakshak AI** is a comprehensive groundwater analytics and early-warning platform built for district-level government officers in the state of Gujarat, India. It aggregates:
+- Real-time IoT sensor data (ESP32 ultrasonic sensors via Firebase)
+- Official Central Ground Water Board (CGWB) records spanning 1950–2024
+- ML-generated future depletion forecasts up to 2075
+- AI-generated root cause and policy recommendation reports (Gemini 1.5 Flash)
+
+The platform answers a single critical operational question:
+> *Which districts are facing groundwater crisis — and how many days do we have before wells run dry?*
+
+---
+
+## 2. Raw Datasets Used
+
+| Dataset File | Period | Format | Used For |
 | :--- | :--- | :--- | :--- |
-| **Ahmedabad** | +0.084 m/yr | -1.164 | Declining |
-| **Amreli** | +0.276 m/yr | -0.037 | Declining |
-| **Anand** | +0.062 m/yr | -14.402 | Declining |
-| **Aravalli** | +0.073 m/yr | -0.083 | Declining |
-| **Banaskantha** | +0.101 m/yr | -0.393 | Declining |
-| **Bharuch** | +0.009 m/yr | -0.003 | Stable/Declining |
-| **Bhavnagar** | +0.178 m/yr | -0.070 | Declining |
-| **Botad** | +0.026 m/yr | -0.018 | Declining |
-| **Chhota Udaipur** | +0.064 m/yr | -0.077 | Declining |
-| **Dang** | +0.037 m/yr | -0.473 | Declining |
-| **Devbhumi Dwarka**| +0.058 m/yr | -0.221 | Declining |
-| **Dohad** | +0.061 m/yr | -0.030 | Declining |
-| **Gandhinagar** | +0.346 m/yr | -0.720 | **Rapid Decline** |
-| **Jamnagar** | +0.234 m/yr | -0.171 | Declining |
-| **Junagadh** | +0.164 m/yr | 0.014 | Declining |
-| **Kachchh** | +0.123 m/yr | -0.087 | Declining |
-| **Kheda** | -0.086 m/yr | -0.019 | Recovering |
-| **Mahesana** | +0.016 m/yr | -0.570 | Stable/Declining |
-| **Mahisagar** | -0.010 m/yr | -0.048 | Recovering |
-| **Morbi** | -0.013 m/yr | -1.570 | Recovering |
-| **Narmada** | +0.051 m/yr | -0.403 | Declining |
-| **Navsari** | +0.116 m/yr | -0.864 | Declining |
-| **Panchmahals** | +0.068 m/yr | -0.076 | Declining |
-| **Patan** | -0.114 m/yr | -3.315 | Recovering |
-| **Porbandar** | +0.537 m/yr | 0.124 | **Rapid Decline** |
-| **Rajkot** | 0.000 m/yr | -0.078 | Stable |
-| **Sabarkantha** | -0.068 m/yr | -0.733 | Recovering |
-| **Surat** | +0.092 m/yr | -1.253 | Declining |
-| **Surendranagar** | +0.091 m/yr | -0.299 | Declining |
-| **Tapi** | +0.157 m/yr | -0.128 | Declining |
-| **Vadodara** | -0.157 m/yr | -0.182 | Recovering |
-| **Valsad** | +0.028 m/yr | -0.011 | Declining |
+| `gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv` | 1991–2020 | CSV | Historical GWL depth for chart & ML training |
+| `gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv` | 1950–1990 | CSV | Extended historical context (pre-training) |
+| `cc0fd6e6-4171-43ab-94d0-33eb1416be14.csv` | CGWB 2024 | CSV | Official district extraction stage & categorization |
+| `river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv` | 2001–2025 | CSV | River recharge potential (monsoon/dry season) |
+| `gwl_tel_6_hourly` | 1991–2020 | CSV | 6-hourly telemetry for recent trend computation |
+| Firebase Realtime DB | 2021–present | JSON | Live ESP32 sensor readings |
 
-*(Note: Negative R² scores are common in linear models applied to highly seasonal groundwater data where variance is overwhelmingly driven by monsoon spikes rather than the long-term decadal mean. The slope remains a reliable indicator of the macro decadal depletion trajectory.)*
+### Key Columns Extracted from CGWB 2024 CSV
+
+| Column Name | Description |
+| :--- | :--- |
+| `District` | Name of the administrative district |
+| `Annual GW Recharge (HAM)` | Total groundwater recharge per year from rainfall, rivers, and irrigation return flow (Hectare Meters) |
+| `Annual GW Extraction (HAM)` | Total groundwater extracted (mostly by agriculture — 92% of Gujarat's total) |
+| `Stage of GW Extraction (%)` | Extraction ÷ Recharge × 100 — the primary sustainability metric |
+| `Category` | Official CGWB classification (Safe / Semi-Critical / Critical / Over-Exploited) |
+
+### Key Columns Extracted from Historical GWL CSVs
+
+| Column Name | Description |
+| :--- | :--- |
+| `District_Name` | Name of the district the well belongs to |
+| `Year` | Calendar year of the reading |
+| `GWL (m bgl)` | Groundwater Level in meters below ground level (positive = deeper) |
+| `Station_No` | Individual well/sensor identifier (multiple per district, averaged) |
+| `Season` | Pre-monsoon / Post-monsoon reading flag |
 
 ---
 
-## Dual-Metric Visualization Architecture
+## 3. Page-by-Page Feature Documentation
 
-HydroMind AI explicitly separates its visual data storytelling into two distinct paradigms to provide both immediate sustainability metrics and long-term physical realities:
+---
 
-1. **Map Risk Zones (Current Sustainability):** 
-   - Powered purely by the **CGWB 2024 Stage of Extraction Percentage** (Extraction volume vs. Recharge volume).
-   - *Logic:* Even if water is physically shallow, if extraction outpaces recharge by >100%, the map strictly classifies it as Over-Exploited (Red). This drives immediate policy intervention regardless of historical reserves.
-   - *Data Source:* `backend/app/services/data_service.py` -> `cc0fd6e6-4171...csv`
+### 3.1 Overview Dashboard (`/`)
 
-2. **Prediction Charts (Physical Depletion Reality):** 
-   - Powered by the **1991-2020 Historical GWL Dataset**.
-   - *Logic:* Aggregates thousands of local well readings per district to calculate the true Mean Average Depth (ft bgl) for any given year. This mean depth is what the Machine Learning model trains on to forecast the exact year a district will hit the 60m (~197ft) hard-rock crisis threshold.
-   - *Data Source:* `backend/train_models.py` -> `gwl_manual_quarterly...csv`
+**Route File:** `src/routes/index.tsx`  
+**API Endpoints Used:** `/api/analysis/districts/forecast-year`, `/api/sensors/stats`, `/api/analysis/state-trend`
 
-## Recent System Updates & Fixes (Changelog)
+#### What It Contains
+The Overview is the **executive summary** dashboard. It is the first page an officer sees after login. It provides the macro picture of Gujarat's groundwater health in a single glance, including:
 
-- **Consistent UI/UX (`reports.tsx` & `predictions.tsx`):** The legacy seasonal profile chart on the Reports page has been unified with the ML Forecast timeline chart, ensuring 100% visual consistency across the platform.
-- **Manual Data Fetching:** The Reports dashboard now requires explicit user selection (dropdown) rather than automatically loading "Mehsana" on mount, saving background API calls and preventing visual stuttering.
-- **PDF Engine Hardening:** Upgraded the `html2canvas` and `jsPDF` pipeline in `reports.tsx` to handle modern CSS `oklch()` color strings by falling back to standard hex values, and added strict string fallbacks to prevent undefined text splits from crashing the download silently.
-- **R² Metric Pruning:** Removed confusing negative R² metrics from user-facing UI elements (top KPI blocks and tables) to maintain stakeholder focus on the actionable "Days to Crisis" and "Annual Rate" metrics.
+- **4 KPI Cards:** Total Districts Monitored | Avg Predicted Depth 2026 | High-Risk Districts | Over-Exploited Count
+- **Gujarat Risk Heat Map (Leaflet):** Interactive map with clickable district circles colored by risk category
+- **State Average Water Level Trend Chart:** Recharts AreaChart showing historical mean GWL for the entire state (1991–2020) with year-range slider
+- **District Detail Panel:** Appears on right side when a district is clicked on the map — shows composite risk score, days-to-crisis countdown, annual depletion rate, and crisis date estimate
+- **AI Insights Panel:** Auto-generated one-paragraph AI summary derived from the ML forecast for the selected district
+
+#### Datasets Used
+- CGWB 2024 CSV → Zone categorization and stage % for map dot colors
+- GWL 1991–2020 CSV → State-average trend line in the bottom chart
+- `district_yearly_actuals.json` (cached artifact) → Pre-computed per-year mean depth for each district
+
+#### Calculations Performed
+
+**1. State Mean Depth (Trend Chart)**
+For each year Y (1991–2020), the script (`train_models.py`) collects all well readings across all districts and computes:
+```
+StateAvgDepth(Y) = mean( GWL_mbgl ) across all wells with Year == Y
+```
+
+**2. District Risk Score (Composite, 0–100)**
+```
+RiskScore = 0.50 × NormalizedStage + 0.30 × NormalizedDepth + 0.20 × NormalizedDeclineRate
+```
+Where each input is min-max normalized across all 33 districts so that the worst district = 100, best = 0.
+
+**3. Days to Crisis**
+```
+DaysToCrisis = ((60m threshold - currentDepth_m) / annualDeclineRate_m) × 365
+```
+If the slope is ≤ 0 (stable/recovering), the system returns "Stable."
+
+#### Zone Color Logic (Map Dots)
+
+| Color | Category | CGWB Stage Threshold |
+| :--- | :--- | :--- |
+| 🟢 Green | Safe | Stage ≤ 70% |
+| 🟡 Yellow | Semi-Critical | 70% < Stage ≤ 90% |
+| 🟠 Orange | Critical | 90% < Stage ≤ 100% |
+| 🔴 Red | Over-Exploited | Stage > 100% |
+
+> **Important:** The color is determined SOLELY by the CGWB 2024 extraction stage percentage — NOT by the physical depth of the water table.
+
+---
+
+### 3.2 Interactive Map (`/map`)
+
+**Route File:** `src/routes/map.tsx`  
+**API Endpoints Used:** `/api/analysis/districts/forecast-year?year={Y}`, `/api/sensors/live`
+
+#### What It Contains
+The Map page is the **animated spatial exploration** tool. It takes the same risk data as the Overview but adds:
+
+- **Full-Screen Leaflet Map** of Gujarat with OpenStreetMap tiles
+- **Year Playback Slider (2020–2075):** Officer can drag or auto-play to see how the ML model predicts district colors will change over time as depletion continues
+- **Live IoT Sensor Pins:** Green pulsing dots showing active ESP32 sensor locations with real-time readings from Firebase
+- **District Popup Cards:** On click, shows predicted depth for the selected year, CGWB category, annual rate, and crisis date
+
+#### Datasets Used
+- `district_forecast_accuracy.json` (trained artifact) → ML slope per district used for forward prediction at any selected year
+- `district_yearly_actuals.json` → Actual historical readings from 1991–2020 for the "past" portion of the slider
+- Firebase Realtime DB → Live sensor pin positions and readings
+
+#### Calculations Performed
+
+**Predicted Depth at Year Y:**
+```
+predictedDepth(Y) = baseDepth_2020 + (annualDeclineRate_m × (Y - 2020))
+```
+Where `baseDepth_2020` is the ML model's extrapolated depth at year 2020, and `annualDeclineRate_m` is the district's LinearRegression slope.
+
+**Dynamic Zone Re-classification at Year Y:**
+The zone color for any future year is re-assigned by calculating what the stage percentage *would be* if extraction continues at the 2024 rate against a declining aquifer:
+```
+futureStage(Y) ≈ stage_2024 × (1 + declineRate × (Y - 2024) × 0.02)
+```
+The same Red/Orange/Yellow/Green thresholds then apply.
+
+---
+
+### 3.3 ML Predictions (`/predictions`)
+
+**Route File:** `src/routes/predictions.tsx`  
+**API Endpoints Used:** `/api/analysis/district-forecast/{district}`
+
+#### What It Contains
+The Predictions page is the **deep forensic analytics** tool for any single district. It contains:
+
+- **4 Summary KPI Cards:** Declining Districts count | Crisis < 10 Years | Crisis < 30 Years | Stable/Recovering
+- **District Deep-Dive Forecast Section:** District dropdown selector with a 3-series AreaChart
+  - **Series 1 — Actual Data (Blue Solid):** The real, jagged line of mean annual depth from CSV files (1991–2020)
+  - **Series 2 — ML Trend Past (Blue Dashed):** The linear line-of-best-fit drawn through the 2005–2020 training window
+  - **Series 3 — ML Forecast (Red Dashed):** Forward extrapolation from 2021 to 2075 using the computed slope
+  - **Red Reference Line at 197ft:** The hard crisis threshold (~60m) where shallow bore wells run dry
+- **All Districts Ranking Table:** Sortable list of all 31 districts ranked by "Days to Crisis" with depth and annual rate columns
+- **About the Model Info Panel:** Technical explanation of why LinearRegression was chosen over gradient boosters
+
+#### Datasets Used
+
+| Source | Purpose |
+| :--- | :--- |
+| `gwl_manual_quarterly_..._1991_2020.csv` | Raw actual readings aggregated to mean annual depth per district |
+| `district_yearly_actuals.json` | Pre-computed cache of mean annual depths (1991–2020) served by the API |
+| `district_forecast_accuracy.json` | Per-district ML slopes (m/yr), R² scores, base depth — trained by `train_models.py` |
+
+#### ML Training Pipeline (`train_models.py`)
+
+**Step 1: Aggregate Annual Mean Depth**
+```python
+for each district D:
+    for each year Y in 1991–2020:
+        meanDepth(D, Y) = mean( GWL_mbgl for all wells in D with Year == Y )
+```
+
+**Step 2: Train LinearRegression on 2005–2020 Window**
+```python
+X = [[2005], [2006], ..., [2020]]   # Year as feature
+y = [meanDepth(D, 2005), ..., meanDepth(D, 2020)]  # Mean depth as target
+model = LinearRegression().fit(X, y)
+slope = model.coef_[0]      # Annual depletion rate (m/yr) — the KEY output
+r2    = model.score(X, y)   # Goodness of fit (low due to monsoon noise)
+```
+
+**Step 3: Save Artifacts**
+- `district_forecast_accuracy.json` → All slopes and R² values
+- `district_yearly_actuals.json` → Full 1991–2020 mean depths for visualization
+
+**Why 2005–2020 for training (not 1991–2020)?**
+The 1991–2004 period includes pre-reform agricultural patterns that do not reflect modern groundwater demand. Using 2005–2020 gives the most accurate slope for projecting current behavior into the future.
+
+**Why Linear Regression (not XGBoost or LightGBM)?**
+Tree-based models are trained only on known data ranges and cannot extrapolate beyond the training period — they produce flat horizontal lines for years 2021+. Linear Regression correctly extends the trend vector indefinitely into the future, which is exactly what a "days to crisis" calculation requires.
+
+#### Crisis Threshold Logic
+```
+Crisis Threshold = 60 metres below ground level = 196.85 feet bgl
+DaysToCrisis = ((60 - currentDepth_m) / slope_m_per_yr) × 365
+CrisisDate = 2026 + (DaysToCrisis / 365)
+```
+If `slope ≤ 0` → district is marked **Stable** (recovering or not declining).
+
+---
+
+### 3.4 Alerts & Dispatch (`/alerts`)
+
+**Route File:** `src/routes/alerts.tsx`  
+**API Endpoints Used:** `/api/alerts/list`, `/api/alerts/dispatch`, `/api/sensors/live`
+
+#### What It Contains
+The Alerts page is the **operational command center** for field officers. It contains:
+
+- **Active Alerts Table:** Lists all auto-triggered threshold breaches by district, sensor ID, breach level (ft bgl), and severity
+- **Alert Severity Badges:** Color-coded exactly like map zones (Critical / Warning / Info)
+- **Manual Alert Dispatch Form:**
+  - Village name search with live autocomplete (type-to-filter)
+  - Alert severity selector (Info / Warning / Critical / Emergency)
+  - Alert message body field
+  - Officer recipient selector
+  - **Send via Email (SMTP)** button
+- **Auto-Dispatch Rules Panel:** Configurable rule-based triggers that auto-fire alerts when sensor readings cross thresholds
+
+#### Auto-Dispatch Logic (Backend Rule Engine)
+
+Alert triggers are evaluated every time a new ESP32 sensor reading arrives at the `/api/sensors/data` POST endpoint:
+
+```
+IF sensor_depth_ft > 160  AND sensor_depth_ft <= 180 → Severity: WARNING
+IF sensor_depth_ft > 180  AND sensor_depth_ft <= 196 → Severity: CRITICAL
+IF sensor_depth_ft > 196                              → Severity: EMERGENCY (immediate)
+```
+
+Triggered alerts fire an SMTP email via the configured `SMTP_USER` / `SMTP_PASSWORD` credentials in `backend/.env`.
+
+#### Manual Dispatch
+Officers can manually compose and send alerts. The village name field includes a debounced search that filters the internal village registry (loaded from `backend/app/data/`) by prefix match as the officer types.
+
+#### Datasets Used
+- Firebase Realtime DB → Live sensor readings that trigger auto-alerts
+- `village_registry.json` → Autocomplete source for village name lookup
+- `backend/.env` → SMTP credentials for email dispatch
+
+---
+
+### 3.5 AI Reports (`/reports`)
+
+**Route File:** `src/routes/reports.tsx`  
+**API Endpoints Used:** `/api/analysis/district/{district}`
+
+#### What It Contains
+The Reports page generates a **full AI-powered district analysis report** on demand. It contains:
+
+- **District Selector Dropdown** (no auto-load — officer must explicitly select)
+- **CGWB 2024 Category Banner:** Color-coded banner showing the district's official sustainability status
+- **4 KPI Cards:**
+  - Aquifer Deficit (% over safe threshold)
+  - IoT Sensors Online (Active ESP32 count estimate)
+  - 30-Day Rain Forecast (from historical rainfall normals)
+  - GW Stage % (CGWB 2024)
+- **ML Forecast Chart (embedded from `/predictions` page):** Full 1991–2075 chart showing Actual Data, ML Trend, and ML Forecast in a shared view
+- **AI Root Cause Agent Panel:** Gemini 1.5 Flash analysis of why depletion is occurring, citing real CGWB figures and historical trends
+- **Predictive Alert Panel:** AI-generated 30-day forward risk forecast and policy recommendations
+- **Download CGWB AI Report (PDF) Button:** Generates a full A4 PDF report including KPI cards, chart snapshot (via html2canvas), AI analysis text, and a monthly data table
+
+#### AI Report Generation Pipeline
+
+**Step 1: Data Aggregation (Backend)**
+```python
+# data_service.py: get_district_analysis(district)
+context = [
+  CGWB_2024_STATS[district],         # Stage %, extraction HAM, recharge HAM
+  HISTORICAL_SUMMARY[district],      # avg_pre2000, avg_post2010, depletion, bounce
+  RIVER_STATS[district],             # monsoon_avg, dry_avg, peak flow m3/s
+  RAINFALL_NORMALS[district],        # annual normal rainfall (mm)
+  RECENT_TELEMETRY_CACHE[district],  # 2021-2025 trend from 8M sensor readings
+]
+```
+
+**Step 2: AI Prompt (analysis.py)**  
+The aggregated context string is injected into a structured Gemini 1.5 Flash prompt that constrains the AI to answer in three parts: Root Cause / Risk Prediction / Policy Recommendation.
+
+**Step 3: PDF Export (reports.tsx)**  
+- `html2canvas` captures the React chart DOM node as a PNG at 2× resolution
+- `jsPDF` constructs the A4 document and embeds the chart image, text blocks (split by column width), and metadata footer
+- File is saved as `{District}_HydroMind_CGWB2024_Report.pdf`
+
+#### Datasets Used
+
+| Source | Powers |
+| :--- | :--- |
+| `cc0fd6e6...csv` / `CGWB_2024_STATS` | Category banner, KPI deficit %, stage % card |
+| `RAINFALL_NORMALS` dict | 30-day rain forecast KPI card |
+| `HISTORICAL_SUMMARY` dict | AI context: decadal trend, bounce, depletion figures |
+| `RIVER_STATS` dict | AI context: recharge potential from surface flow |
+| `district_yearly_actuals.json` | ML chart actual data series (1991–2020) |
+| `district_forecast_accuracy.json` | ML chart trend and forecast data series (2021–2075) |
+
+---
+
+## 4. Machine Learning Model Parameters (All Districts)
+
+**Model:** `sklearn.linear_model.LinearRegression`  
+**Training Window:** 2005–2020 (16 years)  
+**Input Feature (X):** Year (integer)  
+**Target Variable (y):** Mean Annual Depth in metres below ground level  
+**Crisis Threshold:** 60 m bgl (~197 ft bgl)
+
+| District | Annual Rate (m/yr) | R² | Trend |
+| :--- | :--- | :--- | :--- |
+| **Ahmedabad** | +0.084 | -1.164 | Declining |
+| **Amreli** | +0.276 | -0.037 | Declining |
+| **Anand** | +0.062 | -14.402 | Declining |
+| **Aravalli** | +0.073 | -0.083 | Declining |
+| **Banaskantha** | +0.101 | -0.393 | Declining |
+| **Bharuch** | +0.009 | -0.003 | Stable/Declining |
+| **Bhavnagar** | +0.178 | -0.070 | Declining |
+| **Botad** | +0.026 | -0.018 | Declining |
+| **Chhota Udaipur** | +0.064 | -0.077 | Declining |
+| **Dang** | +0.037 | -0.473 | Declining |
+| **Devbhumi Dwarka** | +0.058 | -0.221 | Declining |
+| **Dohad** | +0.061 | -0.030 | Declining |
+| **Gandhinagar** | +0.346 | -0.720 | **Rapid Decline** |
+| **Jamnagar** | +0.234 | -0.171 | Declining |
+| **Junagadh** | +0.164 | 0.014 | Declining |
+| **Kachchh** | +0.123 | -0.087 | Declining |
+| **Kheda** | -0.086 | -0.019 | Recovering |
+| **Mahesana** | +0.016 | -0.570 | Stable/Declining |
+| **Mahisagar** | -0.010 | -0.048 | Recovering |
+| **Morbi** | -0.013 | -1.570 | Recovering |
+| **Narmada** | +0.051 | -0.403 | Declining |
+| **Navsari** | +0.116 | -0.864 | Declining |
+| **Panchmahals** | +0.068 | -0.076 | Declining |
+| **Patan** | -0.114 | -3.315 | Recovering |
+| **Porbandar** | +0.537 | 0.124 | **Rapid Decline** |
+| **Rajkot** | 0.000 | -0.078 | Stable |
+| **Sabarkantha** | -0.068 | -0.733 | Recovering |
+| **Surat** | +0.092 | -1.253 | Declining |
+| **Surendranagar** | +0.091 | -0.299 | Declining |
+| **Tapi** | +0.157 | -0.128 | Declining |
+| **Vadodara** | -0.157 | -0.182 | Recovering |
+| **Valsad** | +0.028 | -0.011 | Declining |
+
+> **Note on R² Scores:** Negative R² values indicate that the linear model fits worse than a simple horizontal mean line — this is expected and acceptable. Groundwater depth is dominated by high-variance seasonal monsoon spikes (±3–7m per year). The **slope (m/yr)** remains the reliable signal for long-term depletion trend extraction, regardless of R².
+
+---
+
+## 5. Dual-Metric Visualization Architecture
+
+Jalrakshak AI separates its analytics into two paradigms that should never be confused:
+
+### Paradigm A — Sustainability Index (Map Zone Colors)
+- **Source:** CGWB 2024 extraction stage percentage
+- **Formula:** `Stage% = (Annual Extraction HAM / Annual Recharge HAM) × 100`
+- **Meaning:** Is the district pumping out more water than rainfall refills each year?
+- **Zone Thresholds:**
+
+| Zone | Color | Condition |
+| :--- | :--- | :--- |
+| Safe | 🟢 Green | Stage ≤ 70% |
+| Semi-Critical | 🟡 Yellow | 70% < Stage ≤ 90% |
+| Critical | 🟠 Orange | 90% < Stage ≤ 100% |
+| Over-Exploited | 🔴 Red | Stage > 100% |
+
+### Paradigm B — Physical Depletion Reality (Prediction Charts)
+- **Source:** 1991–2020 CGWB quarterly GWL CSV
+- **Formula:** `meanDepth(District, Year) = average( GWL_mbgl ) for all wells that year`
+- **Meaning:** How deep is the actual water table in metres below ground level, and when will it hit 60m (crisis)?
+
+> These two paradigms intentionally measure different things. A district can be physically shallow (water at 10m) but still be Over-Exploited (Red) if it is pumping 120% of its recharge. Conversely, a naturally deep aquifer district may be "Safe" despite deep water levels if extraction is well below recharge capacity.
+
+---
+
+## 6. Changelog / Recent Fixes
+
+| Date | Change | File(s) |
+| :--- | :--- | :--- |
+| 2026-07-07 | Replaced seasonal profile chart on Reports page with the unified ML Forecast timeline chart | `reports.tsx`, `predictions.tsx` |
+| 2026-07-07 | Reports page now requires manual district selection — no auto-load of "Mehsana" | `reports.tsx` |
+| 2026-07-07 | Fixed PDF export crash caused by `html2canvas` rejecting modern `oklch()` CSS color strings | `predictions.tsx` |
+| 2026-07-07 | Fixed silent PDF crash when AI text fields (`reason`, `prediction`) were `undefined` | `reports.tsx` |
+| 2026-07-07 | Removed confusing negative R² metric cards from Predictions UI | `predictions.tsx` |
+| 2026-07-07 | Fixed tuple unpacking bug in `/districts/forecast-year` endpoint after `_load_forecast_data()` was upgraded to return 5 items | `analysis.py` |
+| 2026-07-07 | Exported `DistrictForecastChart` as reusable component with `hideKpis` and `height` props | `predictions.tsx` |
