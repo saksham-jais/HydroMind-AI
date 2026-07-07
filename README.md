@@ -27,9 +27,10 @@
 
 <br/>
 
-**[Dashboard Modules](#-dashboard-modules)** &nbsp;·&nbsp;
-**[Architecture](#-architecture)** &nbsp;·&nbsp;
+**[Dashboard Modules](#️-dashboard-modules)** &nbsp;·&nbsp;
+**[Architecture](#️-architecture)** &nbsp;·&nbsp;
 **[ML Models](#-ml-models)** &nbsp;·&nbsp;
+**[Auth & Security](#-authentication--security)** &nbsp;·&nbsp;
 **[Quick Start](#-quick-start)**
 
 </div>
@@ -46,7 +47,7 @@ Over **120 villages** in Gujarat are depleting their aquifers faster than monsoo
 
 > *"Which villages will hit a water crisis first — and what should we do about it right now?"*
 
-Built for **BUILD FOR GOOD 2026** under the **04 DHARTI (धरती) - Water Scarcity & Access** theme, it functions as a command-center decision tool powered by live ESP32 sensors, three production ML models, automated WhatsApp/email alerts, and a RAG AI assistant grounded on real village data.
+Built for **BUILD FOR GOOD 2026** under the **04 DHARTI (धरती) - Water Scarcity & Access** theme, it functions as a command-center decision tool powered by live ESP32 sensors, three production ML models, automated WhatsApp/email alerts, a RAG AI assistant grounded on real village data, and a **secure role-based authentication system**.
 
 <table>
 <tr>
@@ -56,6 +57,25 @@ Built for **BUILD FOR GOOD 2026** under the **04 DHARTI (धरती) - Water S
 <td width="25%" align="center"><b>Decide</b><br/><sub>RAG AI assistant grounded on live data</sub></td>
 </tr>
 </table>
+
+---
+
+## 🆕 What's New
+
+> Latest updates across the platform — frontend, backend, and security.
+
+| Area | Change | Details |
+|---|---|---|
+| 🔐 **Auth** | Secure login gate | Glassmorphism login UI with `AuthProvider` context; blocks unauthenticated dashboard access |
+| 🔐 **Auth** | FastAPI auth backend | `POST /api/auth/login` with role-based user validation (`admin`, `officer`) |
+| 🔐 **Auth** | Persistent sessions | Credentials persisted in `localStorage`; session survives page refresh |
+| ⚙️ **Config** | Dynamic API URL | All frontend API calls now use `VITE_API_URL` env variable — zero hardcoded localhost |
+| ⚙️ **Config** | Environment-driven backend | `backend/app/config.py` centralises all secrets (Gemini key, Firebase, n8n URL) |
+| 🗂️ **Git** | `.gitignore` hardened | `Datasets/` and stray PDFs excluded; `__pycache__` and `.pyc` files cleaned from tracking |
+| 🌐 **Deploy** | Vercel + Render configs | `vercel.json` and `render.yaml` updated for production-ready zero-config deployments |
+| 📡 **IoT** | Multi-sensor firmware | `esp32_multi_sensor.ino` backup added; updated primary firmware with improved WiFi reconnect logic |
+| 🤖 **ML** | District forecast pipeline | `precompute_telemetry.py` generates district-level forecast accuracy and slope JSON files |
+| 📊 **UI** | Auth-aware sidebar | Sidebar shows logged-in user name/role; logout triggers session clear |
 
 ---
 
@@ -69,6 +89,12 @@ flowchart TD
     classDef db fill:#0e1620,stroke:#f59e0b,stroke-width:2px,color:#fef3c7
     classDef ui fill:#0ea5e9,stroke:#0284c7,stroke-width:3px,color:#05080d
     classDef alert fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+    classDef auth fill:#1a0533,stroke:#8b5cf6,stroke-width:2px,color:#ede9fe
+
+    subgraph Auth ["🔐 Auth Layer"]
+        AU("🛡️ FastAPI /auth/login\nRole-based credential check"):::auth
+        AP("⚛️ AuthProvider Context\nPersistent session + guard"):::auth
+    end
 
     subgraph IoT ["📡 IoT Layer"]
         A("🔌 ESP32 + HC-SR04\nUltrasonic Sensor"):::iot
@@ -89,6 +115,8 @@ flowchart TD
         J("👮 District Officers\nGovernment Officials"):::alert
     end
 
+    AP -->|"guards route"| H
+    AP -->|"POST /auth/login"| AU
     A -->|"sensor reading\nevery 30s"| B
     A -->|"POST /api/iot/reading"| C
     B -->|"sync villages"| C
@@ -100,12 +128,52 @@ flowchart TD
     C -->|"risk ≥ 75%"| I
     I -->|"WhatsApp + Email"| J
 
+    style Auth fill:transparent,stroke:#6d28d9,stroke-width:2px,stroke-dasharray:5 5
     style IoT fill:transparent,stroke:#334155,stroke-width:2px,stroke-dasharray:5 5
     style Backend fill:transparent,stroke:#334155,stroke-width:2px,stroke-dasharray:5 5
     style Outputs fill:transparent,stroke:#334155,stroke-width:2px,stroke-dasharray:5 5
 ```
 
-**Data flow:** ESP32 sensors push water-depth readings every 30 seconds to Firebase and the FastAPI backend. Three ML models run inference — LightGBM forecasts future depth, CatBoost classifies risk category, and Isolation Forest flags anomalies. The React dashboard consumes all outputs in real time. When risk crosses threshold, n8n fires WhatsApp + email alerts to named district officers.
+**Data flow:** ESP32 sensors push water-depth readings every 30 seconds to Firebase and the FastAPI backend. Three ML models run inference — LightGBM forecasts future depth, CatBoost classifies risk category, and Isolation Forest flags anomalies. The React dashboard is **gated behind a secure login** — unauthenticated users are redirected to the login page. When risk crosses threshold, n8n fires WhatsApp + email alerts to named district officers.
+
+---
+
+## 🔐 Authentication & Security
+
+A full authentication flow was implemented to protect the dashboard from unauthorised access.
+
+### Frontend — `AuthProvider` Context
+
+- React context (`src/components/auth-provider.tsx`) wraps the entire app
+- Checks `localStorage` on mount to restore sessions across page refreshes
+- Exposes `login()`, `logout()`, `isAuthenticated`, and `user` to all child components
+- Unauthenticated users see only the **Login Page** — all routes are guarded
+
+### Login UI
+
+- Glassmorphism card on an abstract AI-themed background (`public/login-bg.png`)
+- User ID + Password inputs with inline icons
+- Spinner state during async authentication
+- Toasts for success / failure feedback via `sonner`
+
+### Backend — `POST /api/auth/login`
+
+```python
+# backend/app/routers/auth.py
+VALID_USERS = {
+    "admin":       { "password": "password123", "role": "admin"   },
+    "cgwb_gujarat":{ "password": "water",       "role": "officer" }
+}
+```
+
+Returns a `LoginResponse` with `success`, `user` (userid, name, role), and `detail`. Invalid credentials return `success: false` with a hint.
+
+### Default Credentials (Demo)
+
+| User ID | Password | Role |
+|---|---|---|
+| `admin` | `password123` | Super Admin |
+| `cgwb_gujarat` | `water` | CGWB Nodal Officer |
 
 ---
 
@@ -139,6 +207,8 @@ Risk = f( water_level, depletion_trend_6mo, rainfall, temperature, season )
 | 💬 **AI Chat** | `/chat` | RAG assistant (Gemini + ChromaDB) grounded on live village data |
 | 📄 **Reports** | `/reports` | PDF generation — monthly, district, risk analysis, inspection reports |
 
+> All routes are protected by the `AuthProvider` — unauthenticated users are redirected to `/login`.
+
 ---
 
 ## 📸 Screenshots
@@ -148,32 +218,40 @@ Risk = f( water_level, depletion_trend_6mo, rainfall, temperature, season )
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
+<b>Login Gate</b><br/><br/>
+<img src="assets/Login.png" width="100%"/>
+</td>
+<td width="50%" align="center" valign="top">
 <b>Overview Dashboard</b><br/><br/>
 <img src="assets/Overview.png" width="100%"/>
 </td>
+</tr>
+<tr>
 <td width="50%" align="center" valign="top">
 <b>Gujarat Risk Map</b><br/><br/>
 <img src="assets/Map.png" width="100%"/>
 </td>
-</tr>
-<tr>
 <td width="50%" align="center" valign="top">
 <b>AI Predictions & Forecasts</b><br/><br/>
 <img src="assets/Prediction.png" width="100%"/>
 </td>
+</tr>
+<tr>
 <td width="50%" align="center" valign="top">
 <b>Alerts & Dispatch</b><br/><br/>
 <img src="assets/Alerts.png" width="100%"/>
 </td>
-</tr>
-<tr>
 <td width="50%" align="center" valign="top">
 <b>RAG AI Assistant Chat</b><br/><br/>
 <img src="assets/Chat%20Assistant.png" width="100%"/>
 </td>
+</tr>
+<tr>
 <td width="50%" align="center" valign="top">
 <b>Automated Reports</b><br/><br/>
 <img src="assets/Reports.png" width="100%"/>
+</td>
+<td width="50%" align="center" valign="top">
 </td>
 </tr>
 </table>
@@ -192,6 +270,36 @@ Risk = f( water_level, depletion_trend_6mo, rainfall, temperature, season )
 
 Train all three: `python -m app.ml.train` (auto-triggers on first backend start if models are missing)
 
+### District Forecast Pipeline
+
+A standalone `precompute_telemetry.py` script precomputes **district-level forecast accuracy metrics** and **depletion slopes** and writes them to `Datasets/`:
+
+```bash
+python precompute_telemetry.py   # generates district_forecast_accuracy.json + district_forecast_slopes.json
+```
+
+---
+
+## ⚙️ Environment & Configuration
+
+### Frontend `.env`
+
+```env
+VITE_API_URL=http://localhost:8000/api   # switch to your Render URL in production
+```
+
+All API calls in the frontend use `VITE_API_URL` — no hardcoded localhost references remain.
+
+### Backend `.env`
+
+```env
+GEMINI_API_KEY=your_key_from_aistudio.google.com
+FIREBASE_CREDENTIALS_PATH=backend/firebase-credentials.json
+N8N_WEBHOOK_URL=https://your-n8n.app/webhook/hydromind-alerts
+```
+
+`backend/app/config.py` is the single source of truth for all runtime secrets.
+
 ---
 
 ## 📡 API Reference
@@ -199,6 +307,7 @@ Train all three: `python -m app.ml.train` (auto-triggers on first backend start 
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Health check |
+| `POST` | `/api/auth/login` | **NEW** — Authenticate user, returns role + session data |
 | `GET` | `/api/villages` | All monitored villages with live data |
 | `GET` | `/api/villages/totals` | State-wide KPI aggregates |
 | `GET` | `/api/predictions/forecast/{id}` | LightGBM 30/90/180/365-day forecast |
@@ -228,6 +337,14 @@ Interactive docs: **http://localhost:8000/docs**
 <img src="https://img.shields.io/badge/Recharts-22C55E?style=flat-square"/>
 <img src="https://img.shields.io/badge/Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white"/>
 <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white"/>
+</td>
+</tr>
+<tr>
+<td><b>Auth</b></td>
+<td>
+<img src="https://img.shields.io/badge/AuthProvider-React_Context-8B5CF6?style=flat-square"/>
+<img src="https://img.shields.io/badge/Sessions-localStorage-6D28D9?style=flat-square"/>
+<img src="https://img.shields.io/badge/FastAPI_Auth-JWT_Ready-009688?style=flat-square"/>
 </td>
 </tr>
 <tr>
@@ -283,7 +400,7 @@ cp .env.example .env        # set VITE_API_URL=http://localhost:8000/api
 npm run dev
 ```
 
-Open **http://localhost:5173** · Falls back to mock data if backend is offline.
+Open **http://localhost:5173** · Login with `admin / password123` · Falls back to mock data if backend is offline.
 
 ### 2. Backend (FastAPI + ML)
 
@@ -346,25 +463,35 @@ Firmware: iot/hydromind_esp32/hydromind_esp32.ino
 HydroMind-AI/
 │
 ├── src/                          # React dashboard (TanStack Start)
-│   ├── components/               # KPI cards, forecast panel, map, chatbot…
+│   ├── components/
+│   │   ├── auth-provider.tsx     # ★ NEW — React auth context + session management
+│   │   ├── login-page.tsx        # ★ NEW — Glassmorphism login UI
+│   │   ├── app-sidebar.tsx       # Updated — shows user role + logout button
+│   │   └── …                    # KPI cards, forecast panel, map, chatbot…
 │   ├── routes/                   # index, map, predictions, alerts, chat, reports
 │   └── lib/
-│       ├── api/                  # API client + React Query hooks
+│       ├── api/
+│       │   └── client.ts         # Updated — reads VITE_API_URL dynamically
 │       └── mock-data.ts          # Offline fallback data
 │
 ├── backend/                      # FastAPI + ML + RAG
 │   └── app/
+│       ├── config.py             # ★ NEW — centralised secrets & env config
 │       ├── ml/                   # LightGBM, CatBoost, Isolation Forest
-│       ├── routers/              # /villages, /predictions, /alerts, /chat, /iot
+│       ├── routers/
+│       │   ├── auth.py           # ★ NEW — POST /api/auth/login
+│       │   └── …                 # /villages, /predictions, /alerts, /chat, /iot
 │       └── services/             # Firebase, n8n dispatcher, RAG (Gemini)
 │
 ├── iot/
 │   └── hydromind_esp32/
-│       └── hydromind_esp32.ino   # Arduino firmware
+│       ├── hydromind_esp32.ino           # Primary Arduino firmware
+│       └── esp32_multi_sensor.ino.backup # Multi-sensor variant
 │
 ├── n8n/
 │   └── hydromind-alert-workflow.json
 │
+├── precompute_telemetry.py       # ★ NEW — district forecast accuracy precompute
 ├── render.yaml                   # Render deployment config
 ├── vercel.json                   # Vercel deployment config
 └── README.md
@@ -380,11 +507,17 @@ HydroMind-AI/
 | Backend + ML | Render | `render.yaml` |
 | Realtime DB | Firebase Realtime Database | `backend/.env` |
 
+**Environment variable to set in Vercel:**
+```
+VITE_API_URL=https://your-backend.onrender.com/api
+```
+
 ---
 
 ## ⚠️ Honest Limitations
 
 - ML models are trained on **synthetic CGWB-style data** — production deployment requires real historical district records
+- Authentication uses **hardcoded credentials** for demo purposes — replace with a proper database + JWT tokens before production
 - `gemini-2.0-flash-lite` free tier has daily quota limits; adding a billing account removes this restriction
 - ESP32 demo covers **1 physical sensor node** — production would use LoRaWAN or GSM for remote villages
 - Firebase sync is best-effort; sensor data older than 30s may lag in high-load conditions
