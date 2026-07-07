@@ -143,12 +143,12 @@ export function DistrictForecastChart({ district, hideKpis = false, height = 220
         <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="oklch(0.6 0.15 220)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="oklch(0.6 0.15 220)" stopOpacity={0} />
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="predGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="oklch(0.58 0.22 27)" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="oklch(0.58 0.22 27)" stopOpacity={0} />
+              <stop offset="5%" stopColor="#dc2626" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
@@ -161,17 +161,17 @@ export function DistrictForecastChart({ district, hideKpis = false, height = 220
             labelFormatter={(l) => `Year: ${l}`}
             contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 11 }}
           />
-          <ReferenceLine y={196.85} stroke="oklch(0.58 0.22 27)" strokeDasharray="4 2"
-            label={{ value: "Crisis 197ft", position: "insideTopRight", fontSize: 9, fill: "oklch(0.58 0.22 27)" }} />
+          <ReferenceLine y={196.85} stroke="#dc2626" strokeDasharray="4 2"
+            label={{ value: "Crisis 197ft", position: "insideTopRight", fontSize: 9, fill: "#dc2626" }} />
           <Legend wrapperStyle={{ fontSize: 10 }} />
           
-          <Area type="monotone" dataKey="actual" name="Actual Data" stroke="oklch(0.6 0.15 220)"
-            fill="url(#histGrad)" strokeWidth={2.5} dot={{ r: 2, fill: "oklch(0.6 0.15 220)", strokeWidth: 0 }} connectNulls />
+          <Area type="monotone" dataKey="actual" name="Actual Data" stroke="#3b82f6"
+            fill="url(#histGrad)" strokeWidth={2.5} dot={{ r: 2, fill: "#3b82f6", strokeWidth: 0 }} connectNulls />
             
-          <Area type="monotone" dataKey="historical" name="ML Trend (Past)" stroke="oklch(0.6 0.15 220)"
+          <Area type="monotone" dataKey="historical" name="ML Trend (Past)" stroke="#3b82f6"
             fill="none" strokeWidth={1} dot={false} strokeDasharray="3 3" connectNulls />
             
-          <Area type="monotone" dataKey="predicted" name="ML Forecast" stroke="oklch(0.58 0.22 27)"
+          <Area type="monotone" dataKey="predicted" name="ML Forecast" stroke="#dc2626"
             fill="url(#predGrad)" strokeWidth={2} dot={false} strokeDasharray="5 3" connectNulls />
         </AreaChart>
       </ResponsiveContainer>
