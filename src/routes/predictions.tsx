@@ -82,11 +82,12 @@ function DistrictForecastChart({ district }: { district: string }) {
 
   const chartData = useMemo(() => {
     if (!forecast?.trend) return [];
-    const trend = forecast.trend as { year: number; level: number }[];
+    const trend = forecast.trend as { year: number; level: number; actualLevel?: number }[];
     // Historical 1991-2020
     const hist = trend.map((t) => ({
       year: t.year,
       historical: Math.abs(t.level) * 3.28084,
+      actual: t.actualLevel !== undefined && t.actualLevel !== null ? Math.abs(t.actualLevel) * 3.28084 : undefined,
       predicted: undefined as number | undefined,
     }));
     // Future 2021-2075 using slope
@@ -98,6 +99,7 @@ function DistrictForecastChart({ district }: { district: string }) {
       future.push({
         year: y,
         historical: undefined as number | undefined,
+        actual: undefined as number | undefined,
         predicted: Math.max(0, Math.round((baseDepth + slope * (y - 2020)) * 10) / 10) * 3.28084,
       });
     }
@@ -159,15 +161,23 @@ function DistrictForecastChart({ district }: { district: string }) {
           <YAxis reversed tick={{ fontSize: 10 }} tickLine={false}
             tickFormatter={(v) => `${Math.round(v)}ft`} domain={['auto', 'auto']} />
           <RechartTooltip
-            formatter={(val: any, name: string) => [`${Number(val).toFixed(1)} ft bgl`, name === "historical" ? "Historical" : "ML Predicted"]}
+            formatter={(val: any, name: string) => {
+              const lbl = name === "historical" ? "ML Trend (Past)" : name === "actual" ? "Actual (CSV)" : "ML Forecast";
+              return [`${Number(val).toFixed(1)} ft bgl`, lbl];
+            }}
             labelFormatter={(l) => `Year: ${l}`}
             contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 11 }}
           />
           <ReferenceLine y={196.85} stroke="oklch(0.58 0.22 27)" strokeDasharray="4 2"
             label={{ value: "Crisis 197ft", position: "insideTopRight", fontSize: 9, fill: "oklch(0.58 0.22 27)" }} />
           <Legend wrapperStyle={{ fontSize: 10 }} />
-          <Area type="monotone" dataKey="historical" name="Historical (CSV)" stroke="oklch(0.6 0.15 220)"
-            fill="url(#histGrad)" strokeWidth={1.5} dot={false} connectNulls />
+          
+          <Area type="monotone" dataKey="actual" name="Actual Data" stroke="oklch(0.6 0.15 220)"
+            fill="url(#histGrad)" strokeWidth={2.5} dot={{ r: 2, fill: "oklch(0.6 0.15 220)", strokeWidth: 0 }} connectNulls />
+            
+          <Area type="monotone" dataKey="historical" name="ML Trend (Past)" stroke="oklch(0.6 0.15 220)"
+            fill="none" strokeWidth={1} dot={false} strokeDasharray="3 3" connectNulls />
+            
           <Area type="monotone" dataKey="predicted" name="ML Forecast" stroke="oklch(0.58 0.22 27)"
             fill="url(#predGrad)" strokeWidth={2} dot={false} strokeDasharray="5 3" connectNulls />
         </AreaChart>

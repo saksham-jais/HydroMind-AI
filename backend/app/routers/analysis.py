@@ -376,15 +376,17 @@ _MODELS_CACHE = None
 _SLOPES_CACHE = None
 _ACCURACY_CACHE = None
 _REPORTS_CACHE = None
+_ACTUALS_CACHE = None
 
 def _load_forecast_data():
-    global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE
+    global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE, _ACTUALS_CACHE
     if _MODELS_CACHE is None:
         # Artifacts live in backend/app/data/ (portable, git-tracked)
         models_path   = DS / "trained_best_models.joblib"
         slopes_path   = DS / "district_forecast_slopes.json"
         accuracy_path = DS / "district_forecast_accuracy.json"
         reports_path  = DS / "model_comparison_report.json"
+        actuals_path  = DS / "district_yearly_actuals.json"
 
         if models_path.exists():
             _MODELS_CACHE = joblib.load(models_path)
@@ -406,7 +408,8 @@ def _load_forecast_data():
         _SLOPES_CACHE   = json.load(open(slopes_path))   if slopes_path.exists()   else {}
         _ACCURACY_CACHE = json.load(open(accuracy_path)) if accuracy_path.exists() else {}
         _REPORTS_CACHE  = json.load(open(reports_path))  if reports_path.exists()  else {}
-    return _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE
+        _ACTUALS_CACHE  = json.load(open(actuals_path))  if actuals_path.exists()  else {}
+    return _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE, _ACTUALS_CACHE
 
 def _predict_year(model_info, year: int) -> float:
     """Run prediction handling both year-only LR and full-feature ML models."""
@@ -429,7 +432,7 @@ def _predict_year(model_info, year: int) -> float:
 @router.get("/analysis/district-forecast/{name}")
 async def get_district_forecast(name: str, cgwb_category: str = ""):
     """Use trained ML ensemble model to predict when a district will hit the crisis threshold."""
-    models, slopes, accuracy, reports = _load_forecast_data()
+    models, slopes, accuracy, reports, actuals = _load_forecast_data()
     
     # Name alias map: frontend name -> CSV training name
     ALIASES = {
@@ -459,7 +462,9 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
     real_avg = hist.get("avg_post2010", predicted_now)
     
     hist_years = list(range(1991, 2021))
+    district_actuals = actuals.get(district_key, {})
     hist_levels = [round(_predict_year(model_info, y), 2) for y in hist_years]
+    hist_actuals = [district_actuals.get(str(y)) for y in hist_years]
     
     # --- Crisis Logic: Use CGWB official category as primary signal ---
     cgwb_cat_lower = cgwb_category.lower()
@@ -494,6 +499,6 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
         "crisisDate": crisis_date,
         "crisisThreshold_m": CRISIS_THRESHOLD,
         "isInCrisis": is_officially_critical or (slope > 0 and days_to_crisis < 99999),
-        "trend": [{"year": y, "level": l} for y, l in zip(hist_years, hist_levels)],
+        "trend": [{"year": y, "level": l, "actualLevel": a} for y, l, a in zip(hist_years, hist_levels, hist_actuals)],
     }
 
