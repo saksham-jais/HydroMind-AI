@@ -16,11 +16,13 @@
    - [3.3 ML Predictions (`/predictions`)](#33-ml-predictions-predictions)
    - [3.4 Alerts & Dispatch (`/alerts`)](#34-alerts--dispatch-alerts)
    - [3.5 AI Reports (`/reports`)](#35-ai-reports-reports)
-4. [All Models Used in Jalrakshak AI](#4-all-models-used-in-jalrakshak-ai)
-5. [LinearRegression District Parameters (All Districts)](#5-linearregression-district-parameters-all-districts)
-6. [Dual-Metric Visualization Architecture](#6-dual-metric-visualization-architecture)
-7. [Changelog / Recent Fixes](#7-changelog--recent-fixes)
-8. [Official Dataset References & Sources](#8-official-dataset-references--sources)
+   - [3.6 AI Chat Assistant (`/chat`)](#36-ai-chat-assistant-chat)
+4. [AI Agent Pipeline — Deep Dive](#4-ai-agent-pipeline--deep-dive)
+5. [All Models Used in Jalrakshak AI](#5-all-models-used-in-jalrakshak-ai)
+6. [LinearRegression District Parameters (All Districts)](#6-linearregression-district-parameters-all-districts)
+7. [Dual-Metric Visualization Architecture](#7-dual-metric-visualization-architecture)
+8. [Changelog / Recent Fixes](#8-changelog--recent-fixes)
+9. [Official Dataset References & Sources](#9-official-dataset-references--sources)
 
 ---
 
@@ -321,7 +323,116 @@ The aggregated context string is injected into a structured Gemini 1.5 Flash pro
 
 ---
 
-## 4. All Models Used in Jalrakshak AI
+### 3.6 AI Chat Assistant (`/chat`)
+
+**Route File:** `src/routes/chat.tsx`  
+**API Endpoint:** `/api/rag/chat` (POST)
+
+#### What It Contains
+The Chat page is a dedicated conversational interface that allows government officers to ask free-text groundwater questions and receive grounded, factual AI answers without needing to navigate between dashboards. It contains:
+
+- **Chat Input Box:** Multi-line text field with a send button and keyboard shortcut (Enter to send)
+- **Message Thread View:** Scrollable conversation history showing user messages (right-aligned) and AI responses (left-aligned) with source badges
+- **Source Badge:** Each AI response shows whether the answer came from the `rag-gemini` pipeline or the `rule-based` fallback engine
+- **Suggested Starter Questions:** Pre-built question chips shown on first load (e.g., "Which districts are Over-Exploited?", "Why is Mehsana critical?")
+
+#### How Answers Are Generated
+
+1. **Query received** → POST `/api/rag/chat` with `{"query": "..."}` JSON body
+2. **ChromaDB Retrieval** → Top-4 most semantically similar district documents fetched from the vector store using cosine similarity on `gemini-embedding-001` embeddings
+3. **Context injection** → Retrieved documents appended to the Gemini 2.0 Flash Lite prompt as grounding context
+4. **Gemini generation** → Model constrained to answer using only the provided context (no external web access)
+5. **Fallback** → If ChromaDB or Gemini is unavailable, a deterministic rule engine keyword-matches against `CGWB_2024_STATS` dictionaries and returns factual CGWB numbers directly
+
+#### Example Q&A
+
+| User Query | Source | Answer basis |
+| :--- | :--- | :--- |
+| "Why is Mehsana critical?" | rag-gemini | CGWB 2024 stage 109.67%, 70yr depletion data |
+| "Which districts need immediate action?" | rule-based | Over-Exploited districts from `CGWB_2024_STATS` |
+| "What should be done in Patan?" | rag-gemini | CGWB 2024 policy — borewell moratorium recommendation |
+
+#### Datasets Used
+- `CGWB_2024_STATS` dict → District risk category, stage %, extraction deficit
+- `HISTORICAL_SUMMARY` dict → Decadal depletion trend (m) per district
+- ChromaDB vector index built at startup from both sources above (~35 documents)
+
+---
+
+## 4. AI Agent Pipeline — Deep Dive
+
+The most complex AI system in Jalrakshak AI is the **3-Agent Sequential Pipeline** that runs on the `/reports` page. When an officer selects a district, this pipeline fires to produce the AI Root Cause Analysis and Predictive Alert panels.
+
+### How the Pipeline Works
+
+```
+ Officer selects district
+        │
+        ▼
+  data_service.py
+  ┌─────────────────────────────────┐
+  │  Aggregates 5 real data sources │
+  │  into a single context string   │
+  └─────────────────────────────────┘
+        │
+        ▼
+  build_agentic_prompt()
+  ┌──────────────────────────────────────────┐
+  │  AGENT 1 — Root Cause Analyst            │
+  │  AGENT 2 — Risk Predictor                │
+  │  AGENT 3 — Policy Recommender            │
+  │  All injected into ONE Gemini 1.5 Flash  │
+  │  call as sequential reasoning steps      │
+  └──────────────────────────────────────────┘
+        │
+        ▼
+  Gemini 1.5 Flash → JSON output
+  { "reason": "...", "prediction": "..." }
+        │
+        ▼
+  /reports page renders:
+  ├── Root Cause Agent Panel  (reason field)
+  └── Predictive Alert Panel  (prediction field)
+```
+
+### Agent 1 — Root Cause Analyst
+
+| Property | Detail |
+| :--- | :--- |
+| **Role** | Identifies WHY a district's groundwater is declining |
+| **Information Sources** | CGWB 2024 stage % vs 70% safe threshold, 70-year historical depth trend (deepening vs recovery), seasonal bounce (small bounce = poor monsoon recharge), abstraction structure count, North Gujarat aquifer vulnerability context |
+| **Key CGWB fact used** | Irrigation = 92% of all GW extraction; Mahesana water table declined >40m since 1961 |
+| **Output** | 2–3 sentence root cause paragraph with real numbers cited (e.g., "Mehsana's extraction is at 109.67% of annual recharge — 9.67% net deficit per year...") |
+| **Renders in** | `reason` field → "AI Root Cause Agent" panel on `/reports` |
+
+### Agent 2 — Risk Predictor
+
+| Property | Detail |
+| :--- | :--- |
+| **Role** | Classifies 30-day risk and estimates time-to-crisis |
+| **Information Sources** | Current extraction stage %, decadal depth trend (m/decade), seasonal context (monsoon recharge window vs. peak extraction month), CGWB 2024 aquifer stress indicators |
+| **Risk Classification Logic** | `stage > 100%` → CRITICAL \| `stage > 90%` → HIGH \| `stage > 70%` → MEDIUM \| `stage ≤ 70%` → LOW |
+| **Output** | 1–2 sentences: risk level label + estimated days/years until shallow aquifer stress at current rate |
+| **Renders in** | First part of `prediction` field → "Predictive Alert" panel on `/reports` |
+
+### Agent 3 — Policy Recommender
+
+| Property | Detail |
+| :--- | :--- |
+| **Role** | Provides one specific, actionable government intervention citing CGWB 2024 recommendations |
+| **Information Sources** | CGWB 2024 policy knowledge base (hardcoded in `CGWB_POLICY_KNOWLEDGE` constant in `analysis.py`): borewell moratorium rules, micro-irrigation mandates, artificial recharge check dam guidance, GEC 2015 methodology |
+| **Output** | 1 sentence naming the specific intervention + the CGWB finding that justifies it |
+| **Renders in** | Second part of `prediction` field → "Predictive Alert" panel on `/reports` |
+
+### Live IoT Integration (Mehsana only)
+For Mehsana specifically, the pipeline also fetches the **latest 5 ESP32 Firebase readings** and injects them as an additional `LIVE IoT TELEMETRY` block into the prompt before Agent 1 runs. This allows Agent 2 to cross-reference the real-time sensor level against the historical trend for a more precise crisis estimate.
+
+### Fallback Behavior
+If Gemini API is rate-limited or unavailable, the pipeline serves pre-computed fallback strings built directly from the `data_service.py` CGWB stats — ensuring the `/reports` page never shows empty panels even without AI access.
+
+---
+
+## 5. All Models Used in Jalrakshak AI
 
 Jalrakshak AI uses four distinct model/AI systems across different layers of the platform.
 
