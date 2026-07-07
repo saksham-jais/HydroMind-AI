@@ -19,6 +19,7 @@
 4. [Machine Learning Model Parameters (All Districts)](#4-machine-learning-model-parameters-all-districts)
 5. [Dual-Metric Visualization Architecture](#5-dual-metric-visualization-architecture)
 6. [Changelog / Recent Fixes](#6-changelog--recent-fixes)
+7. [Official Dataset References & Sources](#7-official-dataset-references--sources)
 
 ---
 
@@ -45,6 +46,8 @@ The platform answers a single critical operational question:
 | `river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv` | 2001–2025 | CSV | River recharge potential (monsoon/dry season) |
 | `gwl_tel_6_hourly` | 1991–2020 | CSV | 6-hourly telemetry for recent trend computation |
 | Firebase Realtime DB | 2021–present | JSON | Live ESP32 sensor readings |
+
+> 🔗 See **[Section 7](#7-official-dataset-references--sources)** for full official portal links to all datasets.
 
 ### Key Columns Extracted from CGWB 2024 CSV
 
@@ -401,3 +404,72 @@ Jalrakshak AI separates its analytics into two paradigms that should never be co
 | 2026-07-07 | Removed confusing negative R² metric cards from Predictions UI | `predictions.tsx` |
 | 2026-07-07 | Fixed tuple unpacking bug in `/districts/forecast-year` endpoint after `_load_forecast_data()` was upgraded to return 5 items | `analysis.py` |
 | 2026-07-07 | Exported `DistrictForecastChart` as reusable component with `hideKpis` and `height` props | `predictions.tsx` |
+
+---
+
+## 7. Official Dataset References & Sources
+
+All datasets used in Jalrakshak AI are sourced from the **National Water Data Portal (NWDP)** maintained by the **National Water Informatics Centre (NWIC)**, Ministry of Jal Shakti, Government of India.
+
+### Primary Datasets
+
+#### 1. Ground Water Level — Manual Quarterly (1991–2020) ⭐ Core ML Training Dataset
+> Quarterly manual GWL readings from monitoring wells across all Gujarat districts. This is the PRIMARY dataset used for computing annual mean depths and training the LinearRegression ML models.
+
+- **File used:** `gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv`
+- **Portal Page:** [Ground Water Level (Manual - Quarterly), Gujarat SW GW, 1991–2020](https://nwdp.nwic.gov.in/dataset/956add67-cba9-41a5-9d5c-96d73db44aef)
+- **Direct Download:** [gwl_manual_quarterly_cgwb_gj_1991_2020.csv](https://nwdp.nwic.gov.in/dataset/956add67-cba9-41a5-9d5c-96d73db44aef/resource/5fc7025a-79b8-45e7-8028-354b7f38cdad/download/gwl_manual_quarterly_cgwb_gj_1991_2020.csv)
+- **Provider:** Central Ground Water Board (CGWB) / Gujarat Surface Water & Ground Water Departments
+- **Columns Used:** `District_Name`, `Year`, `GWL (m bgl)`, `Station_No`, `Season`
+
+---
+
+#### 2. Ground Water Level — Telemetry Hourly (Gujarat) ⭐ Live IoT Reference Dataset
+> Hourly high-frequency telemetry readings from Gujarat Water Resources Department monitoring stations.
+
+- **File used:** `gwl_tel_6_hourly_gujarat_sw_gw_gj_...csv`
+- **Portal Page:** [Ground Water Level (Telemetry - Hourly), Gujarat SW GW Departments](https://nwdp.nwic.gov.in/dataset/ground-water-level-telemetry-hourly-gujarat-surface-water-and-ground-water-departments)
+- **Provider:** Gujarat Surface Water & Ground Water Departments (via NWIC)
+- **Used For:** Building the `telemetry_cache_2021_2025.json` artifact for the AI root cause context and recent trend computation
+
+---
+
+#### 3. Ground Water Level — Manual Quarterly (1950–1990)
+> Pre-independence and early post-independence well data — used for long historical context.
+
+- **File used:** `gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv`
+- **Portal Page:** [NWDP — GWL Manual Quarterly Gujarat](https://nwdp.nwic.gov.in/)
+- **Provider:** CGWB / Gujarat SW GW Departments
+
+---
+
+#### 4. River Discharge — Manual Daily (2001–2025) ⭐ Recharge Context
+> Daily river surface flow data used to estimate natural GW recharge potential per district.
+
+- **File used:** `river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv`
+- **Direct Download:** [river_discharge_cwc_gujarat_2001_2025_manual_daily.csv](https://nwdp.nwic.gov.in/dataset/08fa3fd0-7861-471d-a295-27c1b239d1fa/resource/b076861e-a9b0-466d-9653-5d55263a4362/download/river_discharge_cwc_gujarat_2001_2025_manual_daily.csv)
+- **Provider:** Central Water Commission (CWC) / Gujarat SW GW Departments
+- **Columns Used:** `District`, `Date`, `Discharge_m3s` (daily flow in cubic metres per second)
+- **Used For:** `RIVER_STATS` dict in `data_service.py` — monsoon avg, dry season avg, peak flow (m³/s) per district
+
+---
+
+#### 5. CGWB 2024 — Dynamic GW Resources Assessment ⭐ Zone Classification Dataset
+> The official 2024 CGWB report providing district-level groundwater extraction stage percentages and official categorization. This is the SOLE data source for map zone colors (Red/Orange/Yellow/Green).
+
+- **File used:** `cc0fd6e6-4171-43ab-94d0-33eb1416be14.csv`
+- **Official Report:** [Dynamic Ground Water Resources Assessment of India — 2024, CGWB](https://jalshakti-cgwb.gov.in/)
+- **Portal:** [National Water Data Portal — CGWB Assessments](https://nwdp.nwic.gov.in/)
+- **Columns Used:** `District`, `Annual GW Recharge (HAM)`, `Annual GW Extraction (HAM)`, `Stage of GW Extraction (%)`, `Category`
+
+---
+
+### Portal & Institutional References
+
+| Institution | Role | URL |
+| :--- | :--- | :--- |
+| National Water Informatics Centre (NWIC) | Primary data portal host | [nwdp.nwic.gov.in](https://nwdp.nwic.gov.in/) |
+| Central Ground Water Board (CGWB) | Official GW assessment authority | [cgwb.gov.in](https://cgwb.gov.in/) |
+| Ministry of Jal Shakti | Parent ministry for water data | [jalshakti-dowr.gov.in](https://jalshakti-dowr.gov.in/) |
+| India-WRIS | Supplementary water resource portal | [india-wris.nrsc.gov.in](https://india-wris.nrsc.gov.in/) |
+| Gujarat Water Resources Dept. | State-level telemetry source | [gwrdc.gujarat.gov.in](https://gwrdc.gujarat.gov.in/) |
