@@ -82,3 +82,26 @@ Below are the computed annual decline rates (Slope) and R² accuracy scores for 
 | **Valsad** | +0.028 m/yr | -0.011 | Declining |
 
 *(Note: Negative R² scores are common in linear models applied to highly seasonal groundwater data where variance is overwhelmingly driven by monsoon spikes rather than the long-term decadal mean. The slope remains a reliable indicator of the macro decadal depletion trajectory.)*
+
+---
+
+## Dual-Metric Visualization Architecture
+
+HydroMind AI explicitly separates its visual data storytelling into two distinct paradigms to provide both immediate sustainability metrics and long-term physical realities:
+
+1. **Map Risk Zones (Current Sustainability):** 
+   - Powered purely by the **CGWB 2024 Stage of Extraction Percentage** (Extraction volume vs. Recharge volume).
+   - *Logic:* Even if water is physically shallow, if extraction outpaces recharge by >100%, the map strictly classifies it as Over-Exploited (Red). This drives immediate policy intervention regardless of historical reserves.
+   - *Data Source:* `backend/app/services/data_service.py` -> `cc0fd6e6-4171...csv`
+
+2. **Prediction Charts (Physical Depletion Reality):** 
+   - Powered by the **1991-2020 Historical GWL Dataset**.
+   - *Logic:* Aggregates thousands of local well readings per district to calculate the true Mean Average Depth (ft bgl) for any given year. This mean depth is what the Machine Learning model trains on to forecast the exact year a district will hit the 60m (~197ft) hard-rock crisis threshold.
+   - *Data Source:* `backend/train_models.py` -> `gwl_manual_quarterly...csv`
+
+## Recent System Updates & Fixes (Changelog)
+
+- **Consistent UI/UX (`reports.tsx` & `predictions.tsx`):** The legacy seasonal profile chart on the Reports page has been unified with the ML Forecast timeline chart, ensuring 100% visual consistency across the platform.
+- **Manual Data Fetching:** The Reports dashboard now requires explicit user selection (dropdown) rather than automatically loading "Mehsana" on mount, saving background API calls and preventing visual stuttering.
+- **PDF Engine Hardening:** Upgraded the `html2canvas` and `jsPDF` pipeline in `reports.tsx` to handle modern CSS `oklch()` color strings by falling back to standard hex values, and added strict string fallbacks to prevent undefined text splits from crashing the download silently.
+- **R² Metric Pruning:** Removed confusing negative R² metrics from user-facing UI elements (top KPI blocks and tables) to maintain stakeholder focus on the actionable "Days to Crisis" and "Annual Rate" metrics.
