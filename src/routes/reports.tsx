@@ -101,7 +101,7 @@ function Reports() {
         { label: "Aquifer Deficit",      value: analysisData.deficit ?? "—",        color: [59,130,246] as [number,number,number] },
         { label: "IoT Sensors",          value: analysisData.sensors ?? "—",        color: [16,185,129] as [number,number,number] },
         { label: "30-Day Rain Forecast", value: analysisData.rain_forecast ?? "—",  color: [99,102,241] as [number,number,number] },
-        { label: "GW Stage",             value: `${stage.toFixed(1)}%`,             color: [cr,cg,cb] },
+        { label: "GW Stage",             value: `${stage.toFixed(1)}%`,             color: [cr,cg,cb] as [number,number,number] },
       ];
       const cardW = (pw - m * 2 - 12) / 4;
       cards.forEach((card, i) => {
@@ -132,7 +132,8 @@ function Reports() {
 
       // AI Root Cause
       doc.setFillColor(239,246,255);
-      const reasonLines = doc.splitTextToSize(analysisData.reason, pw - m*2 - 10);
+      doc.setFontSize(9); doc.setFont("helvetica","normal");
+      const reasonLines = doc.splitTextToSize(analysisData.reason, pw - m*2 - 14);
       const rH = reasonLines.length * 5.5 + 18;
       doc.roundedRect(m, y, pw-m*2, rH, 3, 3, "F");
       doc.setFillColor(59,130,246); doc.roundedRect(m, y, 4, rH, 1, 1, "F");
@@ -144,7 +145,8 @@ function Reports() {
 
       // AI Prediction
       doc.setFillColor(255,251,235);
-      const predLines = doc.splitTextToSize(analysisData.prediction, pw-m*2-10);
+      doc.setFontSize(9); doc.setFont("helvetica","normal");
+      const predLines = doc.splitTextToSize(analysisData.prediction, pw-m*2-14);
       const pH = predLines.length * 5.5 + 18;
       doc.roundedRect(m, y, pw-m*2, pH, 3, 3, "F");
       doc.setFillColor(245,158,11); doc.roundedRect(m, y, 4, pH, 1, 1, "F");
@@ -156,6 +158,10 @@ function Reports() {
 
       // Monthly data table
       if (analysisData.data?.length > 0) {
+        if (y > 220) {
+          doc.addPage();
+          y = 20;
+        }
         doc.setFontSize(12); doc.setTextColor(15,23,42); doc.setFont("helvetica","bold");
         doc.text("Monthly Aquifer Level Summary", m, y); y += 6;
         const colW = (pw-m*2)/3;
@@ -175,11 +181,10 @@ function Reports() {
           doc.text(status, m+4+colW*2, y+5);
           y += 7;
         });
-        y += 4;
       }
 
       // Footer
-      const footerY = doc.internal.pageSize.getHeight() - 12;
+      let footerY = doc.internal.pageSize.getHeight() - 12;
       doc.setFillColor(15,23,42); doc.rect(0, footerY-2, pw, 14, "F");
       doc.setFontSize(8); doc.setTextColor(148,163,184);
       doc.text("HydroMind AI  •  Powered by Gemini 1.5 Flash  •  CGWB 2024 + 70yr Historical Dataset  •  Predict. Alert. Prevent.", pw/2, footerY+5, {align:"center"});

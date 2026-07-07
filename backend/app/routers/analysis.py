@@ -6,9 +6,13 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from app.config import settings
 from app.services.firebase import get_readings
-from app.services.data_service import get_district_analysis
+from app.services.data_service import get_district_analysis, CGWB_2024_STATS, get_historical_summary, DS
+from app.routers.districts_coords import DISTRICT_COORDS
 import json
 import re
+import joblib
+import numpy as np
+from datetime import datetime, timedelta
 
 router = APIRouter(tags=["analysis"])
 
@@ -182,3 +186,185 @@ async def analyze_district(name: str):
         stage_pct=analysis["stage_pct"],
         data_sources=data_sources,
     )
+
+@router.get("/analysis/districts/map")
+async def get_map_data():
+    """Return all districts with real CGWB extraction data for the heatmap."""
+    map_data = []
+    for d in DISTRICT_COORDS:
+        name = d["name"]
+        analysis = get_district_analysis(name)
+        stage = analysis.get("stage_pct", 50)
+        
+        # Determine risk score based on stage
+        # Stage < 70 = Safe (Score < 50)
+        # Stage 70-90 = Semi-Critical (Score 50-70)
+        # Stage 90-100 = Critical (Score 70-85)
+        # Stage > 100 = Over-Exploited (Score 85-100)
+        if stage > 100:
+            risk = 90
+        elif stage > 90:
+            risk = 80
+        elif stage > 70:
+            risk = 60
+        else:
+            risk = 30
+            
+        map_data.append({
+            "id": d["id"],
+            "name": name,
+            "district": name,
+            "lat": d["lat"],
+            "lng": d["lng"],
+            "riskScore": risk,
+            "stagePct": stage,
+            "category": analysis.get("category", "Unknown"),
+            "waterLevel": -get_historical_summary(name).get("avg_post2010", 10.0)
+        })
+    return map_data
+
+@router.get("/analysis/state-trend")
+async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
+    """Return statewide average GWL per month aggregated over a year range."""
+    cache_file = DS / "state_trend_cache.json"
+    if not cache_file.exists():
+        return []
+        
+    with open(cache_file, "r") as f:
+        data = json.load(f)
+        
+    # Aggregate by month across all years in range
+    month_sums = {m: 0.0 for m in range(1, 13)}
+    month_counts = {m: 0 for m in range(1, 13)}
+    
+    for yr_str, months in data.items():
+        yr = int(yr_str)
+        if start_year <= yr <= end_year:
+            for mo_str, val in months.items():
+                mo = int(mo_str)
+                month_sums[mo] += val
+                month_counts[mo] += 1
+                
+    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    chart_data = []
+    
+    # Interpolate missing months (manual quarterly readings usually only happen 4 times a year)
+    # We will build a continuous curve.
+    known_points = {}
+    for m in range(1, 13):
+        if month_counts[m] > 0:
+            known_points[m] = month_sums[m] / month_counts[m]
+            
+    if not known_points:
+        return []
+        
+    # Fill missing with simple interpolation
+    for m in range(1, 13):
+        if m in known_points:
+            val = known_points[m]
+        else:
+            # find closest before and after
+            before = max([k for k in known_points.keys() if k < m] + [min(known_points.keys())])
+            after = min([k for k in known_points.keys() if k > m] + [max(known_points.keys())])
+            if before == after:
+                val = known_points[before]
+            else:
+                # linear interp
+                ratio = (m - before) / (after - before)
+                val = known_points[before] + ratio * (known_points[after] - known_points[before])
+                
+        # Return negative values for "depth below ground" so the chart visualizes it correctly
+        chart_data.append({
+            "month": month_labels[m - 1],
+            "level": -round(val, 2)
+        })
+        
+    return chart_data
+
+# Cache loaded models in memory so we only load once per server boot
+_MODELS_CACHE = None
+_SLOPES_CACHE = None
+_ACCURACY_CACHE = None
+
+def _load_forecast_data():
+    global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE
+    if _MODELS_CACHE is None:
+        models_path = DS / 'trained_linear_models.joblib'
+        slopes_path = DS / 'district_forecast_slopes.json'
+        accuracy_path = DS / 'district_forecast_accuracy.json'
+        _MODELS_CACHE = joblib.load(models_path) if models_path.exists() else {}
+        _SLOPES_CACHE = json.load(open(slopes_path)) if slopes_path.exists() else {}
+        _ACCURACY_CACHE = json.load(open(accuracy_path)) if accuracy_path.exists() else {}
+    return _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE
+
+@router.get("/analysis/district-forecast/{name}")
+async def get_district_forecast(name: str, cgwb_category: str = ""):
+    """Use trained Linear Regression model to predict when a district will hit the crisis threshold."""
+    models, slopes, accuracy = _load_forecast_data()
+    
+    # Name alias map: frontend name -> CSV training name
+    ALIASES = {
+        "Mehsana": "Mahesana",
+        "Dahod": "Dohad",
+        "Chhotaudepur": "Chhota Udaipur",
+        "Devbhumidwarka": "Devbhumi Dwarka",
+    }
+    
+    district_key = name.strip().title()
+    # Apply alias if needed
+    district_key = ALIASES.get(district_key, district_key)
+    
+    model = models.get(district_key)
+    slope = slopes.get(district_key)
+    r2 = accuracy.get(district_key, 0.0)
+    
+    if model is None or slope is None:
+        return {"error": f"No trained model for district: {district_key}", "available": list(models.keys())}
+    
+    CRISIS_THRESHOLD = 60.0
+    
+    current_year = datetime.now().year
+    predicted_now = float(model.predict([[current_year]])[0])
+    
+    hist = get_historical_summary(district_key)
+    real_avg = hist.get("avg_post2010", predicted_now)
+    
+    hist_years = list(range(1991, 2021))
+    hist_levels = [round(float(model.predict([[y]])[0]), 2) for y in hist_years]
+    
+    # --- Crisis Logic: Use CGWB official category as primary signal ---
+    # If CGWB says Over-Exploited or Critical, the district IS in decline regardless of LR slope
+    cgwb_cat_lower = cgwb_category.lower()
+    is_officially_critical = cgwb_cat_lower in ("over-exploited", "critical")
+    
+    # Use absolute value for depth calculation (depths are stored as positive meters below ground)
+    depth = abs(predicted_now)
+    
+    if is_officially_critical or slope > 0:
+        # Use the higher of the two annual rates (official category vs LR slope)
+        effective_slope = max(slope, 1.0) if is_officially_critical and slope <= 0 else slope
+        distance = max(0, CRISIS_THRESHOLD - depth)
+        if distance > 0:
+            years_to_crisis = distance / effective_slope
+            days_to_crisis = int(years_to_crisis * 365.25)
+            crisis_date = (datetime.now() + timedelta(days=days_to_crisis)).strftime("%d %b %y")
+        else:
+            days_to_crisis = 0
+            crisis_date = "Past Threshold"
+    else:
+        days_to_crisis = 99999
+        crisis_date = "Stable"
+    
+    return {
+        "district": district_key,
+        "currentDepth_m": round(depth, 2),
+        "realAvgDepth_m": round(real_avg, 2),
+        "annualDeclineRate_m": round(slope, 3),
+        "r2_accuracy": round(r2, 3),
+        "daysToCrisis": days_to_crisis,
+        "crisisDate": crisis_date,
+        "crisisThreshold_m": CRISIS_THRESHOLD,
+        "isInCrisis": is_officially_critical or (slope > 0 and days_to_crisis < 99999),
+        "trend": [{"year": y, "level": l} for y, l in zip(hist_years, hist_levels)],
+    }
+

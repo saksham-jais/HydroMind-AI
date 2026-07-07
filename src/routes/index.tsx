@@ -10,7 +10,7 @@ import { AIInsights } from "@/components/ai-insights";
 import { AnomalyPanel } from "@/components/anomaly-panel";
 import { Card } from "@/components/ui/card";
 import { useTotals } from "@/lib/api/hooks";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 
 const GujaratMap = lazy(() => import("@/components/gujarat-map").then((m) => ({ default: m.GujaratMap })));
 
@@ -27,6 +27,15 @@ export const Route = createFileRoute("/")({
 
 function Overview() {
   const { data: totals } = useTotals();
+  const [selectedDistrict, setSelectedDistrict] = useState<any>({
+    id: "mehsana",
+    name: "Mehsana",
+    riskScore: 92,
+    stagePct: 150,
+    category: "Over-Exploited",
+    waterLevel: -25
+  });
+
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -35,10 +44,10 @@ function Overview() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total Villages" value={totals.villages} icon={Building2} accent="primary" delta="Monitored daily" />
-        <KpiCard label="Avg Water Level" value={totals.avgWaterLevel} unit="ft" icon={Droplet} accent="primary" delta="+3 ft vs last month" deltaTone="up" />
-        <KpiCard label="High-Risk Villages" value={totals.highRisk} icon={AlertTriangle} accent="critical" delta="+2 this week" deltaTone="up" />
-        <KpiCard label="Active Alerts" value={totals.activeAlerts} icon={BellRing} accent="warning" delta="4 acknowledged" deltaTone="neutral" />
+        <KpiCard label="Total Villages" value={totals?.villages ?? 0} icon={Building2} accent="primary" delta="Monitored daily" />
+        <KpiCard label="Avg Water Level" value={totals?.avgWaterLevel ?? 0} unit="ft" icon={Droplet} accent="primary" delta="+3 ft vs last month" deltaTone="up" />
+        <KpiCard label="High-Risk Villages" value={totals?.highRisk ?? 0} icon={AlertTriangle} accent="critical" delta="+2 this week" deltaTone="up" />
+        <KpiCard label="Active Alerts" value={totals?.activeAlerts ?? 0} icon={BellRing} accent="warning" delta="4 acknowledged" deltaTone="neutral" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -55,23 +64,19 @@ function Overview() {
             </div>
           </div>
           <Suspense fallback={<div className="h-[420px] animate-pulse rounded-md bg-muted" />}>
-            <GujaratMap height={420} />
+            <GujaratMap height={420} onSelect={setSelectedDistrict} />
           </Suspense>
         </Card>
         <div className="space-y-4">
-          <RiskMeter />
-          <CrisisCountdown />
+          <RiskMeter district={selectedDistrict.name} score={Math.round(selectedDistrict.riskScore)} category={selectedDistrict.category} />
+          <CrisisCountdown district={selectedDistrict.name} category={selectedDistrict.category} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2 p-5">
           <div className="mb-2 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold">Water Level Trend — State Average</h3>
-              <p className="text-xs text-muted-foreground">Depth below ground (ft), past 12 months</p>
-            </div>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Recharts</span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground invisible">Recharts</span>
           </div>
           <TrendChart />
         </Card>

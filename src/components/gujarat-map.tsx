@@ -10,18 +10,21 @@ const colorFor = (score: number) => {
   return "oklch(0.65 0.16 145)";
 };
 
-export function GujaratMap({ height = 480, search = "" }: { height?: number; search?: string }) {
-  const { data: villages = mockVillages } = useQuery({
-    queryKey: ["villages"],
-    queryFn: () => api.villages(),
-    refetchInterval: 2000,
-    initialData: mockVillages
+export function GujaratMap({ height = 480, search = "", onSelect }: { height?: number; search?: string; onSelect?: (district: any) => void }) {
+  const { data: districts = [] } = useQuery({
+    queryKey: ["districtMapData"],
+    queryFn: async () => {
+      const res = await fetch("http://127.0.0.1:8000/api/analysis/districts/map");
+      if (!res.ok) throw new Error("Failed to fetch map data");
+      return res.json();
+    },
+    refetchInterval: 30000,
   });
 
   const q = search.toLowerCase().trim();
-  const filteredVillages = villages.filter(v => {
+  const filteredDistricts = districts.filter((d: any) => {
     if (!q) return true;
-    return v.name.toLowerCase().includes(q) || v.id.toLowerCase() === q;
+    return d.name.toLowerCase().includes(q);
   });
 
   return (
@@ -38,24 +41,25 @@ export function GujaratMap({ height = 480, search = "" }: { height?: number; sea
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <ZoomControl position="topright" />
-        {filteredVillages.map((v) => (
+        {filteredDistricts.map((d: any) => (
           <CircleMarker
-            key={v.id}
-            center={[v.lat, v.lng]}
-            radius={8 + v.riskScore / 12}
+            key={d.id}
+            center={[d.lat, d.lng]}
+            radius={8 + d.riskScore / 12}
+            eventHandlers={{ click: () => onSelect?.(d) }}
             pathOptions={{
-              color: colorFor(v.riskScore),
-              fillColor: colorFor(v.riskScore),
+              color: colorFor(d.riskScore),
+              fillColor: colorFor(d.riskScore),
               fillOpacity: 0.55,
               weight: 2,
             }}
           >
             <Tooltip direction="top" offset={[0, -4]} opacity={1}>
               <div className="text-xs">
-                <div className="font-semibold">{v.name}</div>
-                <div className="text-muted-foreground">{v.district}</div>
-                <div>Risk: <span className="font-medium">{v.riskScore}%</span></div>
-                <div>Level: {v.waterLevel} ft</div>
+                <div className="font-semibold text-sm">{d.name}</div>
+                <div className="text-muted-foreground mb-1">{d.category}</div>
+                <div>Stage of Extraction: <span className="font-medium text-destructive">{d.stagePct.toFixed(1)}%</span></div>
+                <div>Avg Water Level: <span className="font-medium">{Math.abs(d.waterLevel).toFixed(1)} m bgl</span></div>
               </div>
             </Tooltip>
           </CircleMarker>

@@ -53,6 +53,7 @@ CGWB_2024_STATS = {
     "narmada":       {"stage": 63.14,  "category": "Safe",           "extraction": 24432, "recharge": 40098},
     "navsari":       {"stage": 29.53,  "category": "Safe",           "extraction": 22135, "recharge": 77256},
     "panchmahals":   {"stage": 23.91,  "category": "Safe",           "extraction": 12883, "recharge": 56048},
+    "panchmahal":    {"stage": 23.91,  "category": "Safe",           "extraction": 12883, "recharge": 56048},
     "patan":         {"stage": 112.10, "category": "Over-Exploited", "extraction": 40397, "recharge": 36756},
     "porbandar":     {"stage": 56.76,  "category": "Safe",           "extraction": 12037, "recharge": 22739},
     "rajkot":        {"stage": 65.66,  "category": "Safe",           "extraction": 107555,"recharge": 172426},
@@ -62,6 +63,7 @@ CGWB_2024_STATS = {
     "tapi":          {"stage": 32.66,  "category": "Safe",           "extraction": 23128, "recharge": 73460},
     "vadodara":      {"stage": 66.89,  "category": "Safe",           "extraction": 68646, "recharge": 107128},
     "valsad":        {"stage": 29.58,  "category": "Safe",           "extraction": 20471, "recharge": 71474},
+    "chhota udaipur":{"stage": 43.28,  "category": "Safe",           "extraction": 24540, "recharge": 62997},
 }
 
 # ── Historical GWL (70yr) per-district summary — pre-computed ──────────
