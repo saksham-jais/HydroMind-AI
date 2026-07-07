@@ -13,8 +13,12 @@ from functools import lru_cache
 from datetime import datetime
 import json
 
-DS = Path(r"D:\Mega\Hackathon\HackAarambh\HydroMind-AI\Datasets")
+# Portable path — works on both Windows dev and Render (Linux) deploy
+# Models/telemetry cache live in backend/app/data/ (tracked in git)
+DS = Path(__file__).parent.parent / "data"
 
+# Raw CSVs are large and not committed — they are read locally during training only.
+# Trained artifacts (trained_best_models.joblib etc.) live in DS (backend/app/data/).
 GWL_1950 = DS / "gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv"
 GWL_1991 = DS / "gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv"
 CGWB2024  = DS / "cc0fd6e6-4171-43ab-94d0-33eb1416be14.csv"
@@ -148,7 +152,7 @@ RIVER_STATS = {
 }
 
 # ── Recent Telemetry (2021-2025) Cache ────────────────────────────────
-RECENT_TELEMETRY_CACHE = DS / 'telemetry_cache_2021_2025.json'
+RECENT_TELEMETRY_CACHE = DS / "telemetry_cache_2021_2025.json"
 _telemetry_data = None
 
 def get_recent_telemetry(district: str) -> dict:

@@ -12,6 +12,7 @@ import json
 import re
 import joblib
 import numpy as np
+from pathlib import Path
 from datetime import datetime, timedelta
 
 router = APIRouter(tags=["analysis"])
@@ -360,24 +361,32 @@ _REPORTS_CACHE = None
 def _load_forecast_data():
     global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE
     if _MODELS_CACHE is None:
-        models_path = DS / 'trained_best_models.joblib'
-        legacy_path = DS / 'trained_linear_models.joblib'
-        slopes_path = DS / 'district_forecast_slopes.json'
-        accuracy_path = DS / 'district_forecast_accuracy.json'
-        reports_path = DS / 'model_comparison_report.json'
-        
+        # Artifacts live in backend/app/data/ (portable, git-tracked)
+        models_path   = DS / "trained_best_models.joblib"
+        slopes_path   = DS / "district_forecast_slopes.json"
+        accuracy_path = DS / "district_forecast_accuracy.json"
+        reports_path  = DS / "model_comparison_report.json"
+
         if models_path.exists():
             _MODELS_CACHE = joblib.load(models_path)
-        elif legacy_path.exists():
-            # Wrap legacy LR models in the new dict format
-            legacy = joblib.load(legacy_path)
-            _MODELS_CACHE = {k: {"model": v, "type": "LinearRegression", "features": "year_only"} for k, v in legacy.items()}
         else:
-            _MODELS_CACHE = {}
-            
-        _SLOPES_CACHE = json.load(open(slopes_path)) if slopes_path.exists() else {}
+            # No model file yet — trigger an in-process training with fallback data
+            import importlib, sys
+            try:
+                # backend is the cwd on Render, so train_models is importable
+                import train_models
+                train_models.train()
+                if models_path.exists():
+                    _MODELS_CACHE = joblib.load(models_path)
+                else:
+                    _MODELS_CACHE = {}
+            except Exception as e:
+                print(f"[analysis] Could not auto-train models: {e}")
+                _MODELS_CACHE = {}
+
+        _SLOPES_CACHE   = json.load(open(slopes_path))   if slopes_path.exists()   else {}
         _ACCURACY_CACHE = json.load(open(accuracy_path)) if accuracy_path.exists() else {}
-        _REPORTS_CACHE = json.load(open(reports_path)) if reports_path.exists() else {}
+        _REPORTS_CACHE  = json.load(open(reports_path))  if reports_path.exists()  else {}
     return _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE
 
 def _predict_year(model_info, year: int) -> float:
