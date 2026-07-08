@@ -1,5 +1,9 @@
-const envUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || "http://127.0.0.1:8000";
-export const API_BASE = `${envUrl}/api`;
+// Dynamically construct the API URL so it works on LAN (192.168.x.x) and localhost
+const defaultBase = typeof window !== 'undefined' ? `http://${window.location.hostname}:8080` : "http://127.0.0.1:8080";
+const envUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '');
+const finalUrl = (envUrl && envUrl !== "http://127.0.0.1:8080") ? envUrl : defaultBase;
+
+export const API_BASE = `${finalUrl}/api`;
 
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {

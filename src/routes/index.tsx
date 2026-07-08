@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Building2, Droplet, AlertTriangle, BellRing } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useState } from "react";
+import { API_BASE } from "@/lib/api/client";
 import { KpiCard } from "@/components/kpi-card";
 import { TrendChart } from "@/components/trend-chart";
 import { CrisisCountdown } from "@/components/crisis-countdown";
@@ -39,7 +40,7 @@ function Overview() {
   const { data: districts = [], isLoading } = useQuery({
     queryKey: ["allDistrictsForecast2026"],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/analysis/districts/forecast-year?year=2026`);
+      const res = await fetch(`${API_BASE}/analysis/districts/forecast-year?year=2026`);
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },

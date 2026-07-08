@@ -1,0 +1,454 @@
+{
+  "Banaskantha": {
+    "yearly_averages": {
+      "2022": -56.34,
+      "2023": -54.46,
+      "2024": -69.92,
+      "2025": -66.55,
+      "2021": -65.99
+    },
+    "recent_trend": "-3.93m change from 2021 to 2024",
+    "recent_depletion": -3.93,
+    "historical_min": -299.95,
+    "historical_max": 100.0,
+    "total_readings": 1103852
+  },
+  "Gandhinagar": {
+    "yearly_averages": {
+      "2023": -70.72,
+      "2024": -72.51,
+      "2025": -56.77,
+      "2021": -80.27,
+      "2022": -75.66
+    },
+    "recent_trend": "+7.76m change from 2021 to 2024",
+    "recent_depletion": 7.76,
+    "historical_min": -199.41,
+    "historical_max": 99.99,
+    "total_readings": 424704
+  },
+  "Kachchh": {
+    "yearly_averages": {
+      "2023": -31.2,
+      "2024": -46.6,
+      "2025": -47.05,
+      "2022": -29.36,
+      "2021": -34.61
+    },
+    "recent_trend": "-11.99m change from 2021 to 2024",
+    "recent_depletion": -11.99,
+    "historical_min": -188.65,
+    "historical_max": 99.78,
+    "total_readings": 793200
+  },
+  "Mahesana": {
+    "yearly_averages": {
+      "2023": -56.63,
+      "2024": -56.51,
+      "2025": -38.11,
+      "2022": -69.95,
+      "2021": -68.21
+    },
+    "recent_trend": "+11.70m change from 2021 to 2024",
+    "recent_depletion": 11.7,
+    "historical_min": -252.95,
+    "historical_max": 100.0,
+    "total_readings": 906761
+  },
+  "Patan": {
+    "yearly_averages": {
+      "2023": -54.63,
+      "2024": -56.24,
+      "2025": -44.34,
+      "2022": -76.5,
+      "2021": -84.83
+    },
+    "recent_trend": "+28.59m change from 2021 to 2024",
+    "recent_depletion": 28.59,
+    "historical_min": -299.36,
+    "historical_max": 96.31,
+    "total_readings": 477086
+  },
+  "Sabarkantha": {
+    "yearly_averages": {
+      "2023": -17.05,
+      "2024": -15.14,
+      "2025": -8.38,
+      "2022": -20.31,
+      "2021": -23.27
+    },
+    "recent_trend": "+8.13m change from 2021 to 2024",
+    "recent_depletion": 8.13,
+    "historical_min": -164.44,
+    "historical_max": 86.76,
+    "total_readings": 699110
+  },
+  "Surat": {
+    "yearly_averages": {
+      "2024": -6.56,
+      "2025": -5.02,
+      "2022": -7.46,
+      "2023": -6.93
+    },
+    "recent_trend": "+0.90m change from 2022 to 2024",
+    "recent_depletion": 0.9,
+    "historical_min": -60.43,
+    "historical_max": 60.33,
+    "total_readings": 184913
+  },
+  "Bhavnagar": {
+    "yearly_averages": {
+      "2023": -10.07,
+      "2024": -9.04,
+      "2025": -6.25,
+      "2022": -9.48
+    },
+    "recent_trend": "+0.44m change from 2022 to 2024",
+    "recent_depletion": 0.44,
+    "historical_min": -55.28,
+    "historical_max": 22.12,
+    "total_readings": 195711
+  },
+  "Porbandar": {
+    "yearly_averages": {
+      "2023": -6.82,
+      "2024": -6.7,
+      "2025": -4.45,
+      "2022": -9.76,
+      "2021": -15.61
+    },
+    "recent_trend": "+8.91m change from 2021 to 2024",
+    "recent_depletion": 8.91,
+    "historical_min": -226.18,
+    "historical_max": 16.57,
+    "total_readings": 127224
+  },
+  "Bharuch": {
+    "yearly_averages": {
+      "2022": -11.78,
+      "2023": -10.58,
+      "2024": -10.41,
+      "2025": -7.32,
+      "2021": -15.11
+    },
+    "recent_trend": "+4.70m change from 2021 to 2024",
+    "recent_depletion": 4.7,
+    "historical_min": -51.3,
+    "historical_max": 24.4,
+    "total_readings": 201364
+  },
+  "Narmada": {
+    "yearly_averages": {
+      "2022": -12.28,
+      "2023": -13.3,
+      "2024": -13.72,
+      "2025": -6.43
+    },
+    "recent_trend": "-1.44m change from 2022 to 2024",
+    "recent_depletion": -1.44,
+    "historical_min": -52.79,
+    "historical_max": 50.34,
+    "total_readings": 105720
+  },
+  "Dohad": {
+    "yearly_averages": {
+      "2022": -8.28,
+      "2023": -8.01,
+      "2024": -7.31,
+      "2025": -2.96
+    },
+    "recent_trend": "+0.97m change from 2022 to 2024",
+    "recent_depletion": 0.97,
+    "historical_min": -36.44,
+    "historical_max": 26.58,
+    "total_readings": 151403
+  },
+  "Dang": {
+    "yearly_averages": {
+      "2022": -14.62,
+      "2023": -18.41,
+      "2024": -20.44,
+      "2025": -0.42
+    },
+    "recent_trend": "-5.82m change from 2022 to 2024",
+    "recent_depletion": -5.82,
+    "historical_min": -85.66,
+    "historical_max": 85.27,
+    "total_readings": 56499
+  },
+  "Amreli": {
+    "yearly_averages": {
+      "2022": -8.47,
+      "2023": -12.64,
+      "2024": -15.49,
+      "2025": -10.07,
+      "2021": -10.1
+    },
+    "recent_trend": "-5.39m change from 2021 to 2024",
+    "recent_depletion": -5.39,
+    "historical_min": -96.0,
+    "historical_max": 55.18,
+    "total_readings": 239746
+  },
+  "Aravalli": {
+    "yearly_averages": {
+      "2022": -9.01,
+      "2023": -11.63,
+      "2024": -9.4,
+      "2025": 0.56
+    },
+    "recent_trend": "-0.39m change from 2022 to 2024",
+    "recent_depletion": -0.39,
+    "historical_min": -45.8,
+    "historical_max": 45.08,
+    "total_readings": 138877
+  },
+  "Ahmedabad": {
+    "yearly_averages": {
+      "2022": -30.35,
+      "2023": -26.35,
+      "2024": -27.92,
+      "2025": -19.86,
+      "2021": -38.4
+    },
+    "recent_trend": "+10.48m change from 2021 to 2024",
+    "recent_depletion": 10.48,
+    "historical_min": -200.46,
+    "historical_max": 99.3,
+    "total_readings": 430246
+  },
+  "Gir Somnath": {
+    "yearly_averages": {
+      "2024": -8.91,
+      "2025": -5.01,
+      "2022": -7.09,
+      "2023": -8.5
+    },
+    "recent_trend": "-1.82m change from 2022 to 2024",
+    "recent_depletion": -1.82,
+    "historical_min": -59.67,
+    "historical_max": 43.0,
+    "total_readings": 108568
+  },
+  "Kheda": {
+    "yearly_averages": {
+      "2024": -15.15,
+      "2025": -11.46,
+      "2023": -16.76,
+      "2022": -20.08,
+      "2021": -26.14
+    },
+    "recent_trend": "+10.99m change from 2021 to 2024",
+    "recent_depletion": 10.99,
+    "historical_min": -201.5,
+    "historical_max": 75.93,
+    "total_readings": 205295
+  },
+  "Mahisagar": {
+    "yearly_averages": {
+      "2022": -14.51,
+      "2023": -12.29,
+      "2024": -11.74,
+      "2025": -7.13
+    },
+    "recent_trend": "+2.77m change from 2022 to 2024",
+    "recent_depletion": 2.77,
+    "historical_min": -61.54,
+    "historical_max": 35.8,
+    "total_readings": 72226
+  },
+  "Botad": {
+    "yearly_averages": {
+      "2022": -8.62,
+      "2023": -9.47,
+      "2024": -9.87,
+      "2025": -8.94
+    },
+    "recent_trend": "-1.25m change from 2022 to 2024",
+    "recent_depletion": -1.25,
+    "historical_min": -59.34,
+    "historical_max": 60.44,
+    "total_readings": 66262
+  },
+  "Navsari": {
+    "yearly_averages": {
+      "2022": -7.58,
+      "2023": -7.92,
+      "2024": -7.69,
+      "2025": -2.17
+    },
+    "recent_trend": "-0.11m change from 2022 to 2024",
+    "recent_depletion": -0.11,
+    "historical_min": -106.19,
+    "historical_max": 52.31,
+    "total_readings": 105748
+  },
+  "Chhota Udaipur": {
+    "yearly_averages": {
+      "2024": -12.11,
+      "2025": -5.04,
+      "2022": -12.16,
+      "2023": -13.62
+    },
+    "recent_trend": "+0.05m change from 2022 to 2024",
+    "recent_depletion": 0.05,
+    "historical_min": -68.23,
+    "historical_max": 56.82,
+    "total_readings": 112483
+  },
+  "Valsad": {
+    "yearly_averages": {
+      "2022": -9.6,
+      "2023": -9.86,
+      "2024": -11.54,
+      "2025": 0.23
+    },
+    "recent_trend": "-1.94m change from 2022 to 2024",
+    "recent_depletion": -1.94,
+    "historical_min": -82.8,
+    "historical_max": 51.04,
+    "total_readings": 139829
+  },
+  "Junagadh": {
+    "yearly_averages": {
+      "2022": -7.03,
+      "2023": -7.81,
+      "2024": -7.66,
+      "2025": -7.14
+    },
+    "recent_trend": "-0.63m change from 2022 to 2024",
+    "recent_depletion": -0.63,
+    "historical_min": -67.02,
+    "historical_max": 59.63,
+    "total_readings": 200751
+  },
+  "Anand": {
+    "yearly_averages": {
+      "2022": -14.4,
+      "2023": -13.47,
+      "2024": -11.37,
+      "2025": 1.11
+    },
+    "recent_trend": "+3.03m change from 2022 to 2024",
+    "recent_depletion": 3.03,
+    "historical_min": -70.31,
+    "historical_max": 40.49,
+    "total_readings": 176512
+  },
+  "Rajkot": {
+    "yearly_averages": {
+      "2022": -9.97,
+      "2023": -9.56,
+      "2024": -9.56,
+      "2025": -3.56
+    },
+    "recent_trend": "+0.41m change from 2022 to 2024",
+    "recent_depletion": 0.41,
+    "historical_min": -284.08,
+    "historical_max": 41.48,
+    "total_readings": 275275
+  },
+  "Surendranagar": {
+    "yearly_averages": {
+      "2022": -25.05,
+      "2023": -18.34,
+      "2024": -20.41,
+      "2025": -11.15
+    },
+    "recent_trend": "+4.64m change from 2022 to 2024",
+    "recent_depletion": 4.64,
+    "historical_min": -298.92,
+    "historical_max": 90.71,
+    "total_readings": 258263
+  },
+  "TAPI": {
+    "yearly_averages": {
+      "2022": -6.05,
+      "2023": -8.02,
+      "2024": -7.8,
+      "2025": -9.75
+    },
+    "recent_trend": "-1.75m change from 2022 to 2024",
+    "recent_depletion": -1.75,
+    "historical_min": -71.11,
+    "historical_max": 21.08,
+    "total_readings": 141968
+  },
+  "Dahod": {
+    "yearly_averages": {
+      "2024": -8.97,
+      "2025": -12.54
+    },
+    "recent_trend": "No sufficient data",
+    "recent_depletion": 0,
+    "historical_min": -44.16,
+    "historical_max": 44.04,
+    "total_readings": 9314
+  },
+  "Morbi": {
+    "yearly_averages": {
+      "2022": -8.26,
+      "2023": -9.11,
+      "2024": -8.67,
+      "2025": -4.38
+    },
+    "recent_trend": "-0.41m change from 2022 to 2024",
+    "recent_depletion": -0.41,
+    "historical_min": -66.77,
+    "historical_max": 56.42,
+    "total_readings": 107194
+  },
+  "Devbhumi Dwarka": {
+    "yearly_averages": {
+      "2024": -10.84,
+      "2025": -7.92,
+      "2022": -11.05,
+      "2023": -11.65
+    },
+    "recent_trend": "+0.21m change from 2022 to 2024",
+    "recent_depletion": 0.21,
+    "historical_min": -70.22,
+    "historical_max": 67.11,
+    "total_readings": 104334
+  },
+  "Vadodara": {
+    "yearly_averages": {
+      "2024": -17.87,
+      "2025": -0.93,
+      "2022": -15.74,
+      "2023": -15.12,
+      "2021": -20.85
+    },
+    "recent_trend": "+2.98m change from 2021 to 2024",
+    "recent_depletion": 2.98,
+    "historical_min": -170.92,
+    "historical_max": 80.76,
+    "total_readings": 147754
+  },
+  "Jamnagar": {
+    "yearly_averages": {
+      "2024": -8.7,
+      "2025": -2.48,
+      "2022": -7.09,
+      "2023": -8.98
+    },
+    "recent_trend": "-1.61m change from 2022 to 2024",
+    "recent_depletion": -1.61,
+    "historical_min": -58.43,
+    "historical_max": 51.06,
+    "total_readings": 179512
+  },
+  "Panchmahals": {
+    "yearly_averages": {
+      "2024": -7.84,
+      "2025": -5.38,
+      "2022": -8.92,
+      "2023": -8.26
+    },
+    "recent_trend": "+1.08m change from 2022 to 2024",
+    "recent_depletion": 1.08,
+    "historical_min": -67.78,
+    "historical_max": 36.79,
+    "total_readings": 145310
+  }
+}

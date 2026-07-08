@@ -150,14 +150,12 @@ class Predictor:
             anomaly_score = round(max(0, min(1, 0.5 - score_raw)), 2)
             flagged = anomaly_score >= 0.7 or v["riskScore"] >= 80
             
-            # Use Gemini to generate a context-aware reason
-            description = self._generate_ai_anomaly_reason(
-                village_name=v["name"], 
-                district=v["district"], 
-                score=anomaly_score, 
-                risk=v["riskScore"], 
-                trend=v["trend6mo"]
-            )
+            # Use simple logic instead of a heavy Gemini API call for high-frequency IoT data
+            description = "Abnormal water level fluctuation detected by sensor network"
+            if anomaly_score >= 0.8:
+                description = f"High anomaly score ({anomaly_score}): Immediate inspection required"
+            elif v["trend6mo"] < -5.0:
+                description = "Severe depletion trend detected alongside abnormal reading"
             
             results.append({
                 "id": f"AN-{i+1:03d}",

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { API_BASE } from "@/lib/api/client";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Line, ComposedChart, ReferenceLine } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { jsPDF } from "jspdf";
@@ -50,7 +51,7 @@ function Reports() {
   const { data: analysisData, isLoading } = useQuery({
     queryKey: ["districtAnalysis", district],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/analysis/district/${district}`);
+      const res = await fetch(`${API_BASE}/analysis/district/${district}`);
       if (!res.ok) throw new Error("Failed to fetch analysis");
       return res.json();
     },

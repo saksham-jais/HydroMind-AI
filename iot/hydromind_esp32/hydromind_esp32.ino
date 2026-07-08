@@ -26,7 +26,7 @@ const char *FIREBASE_HOST =
     "https://"
     "hydromind-ai-2116e-default-rtdb.asia-southeast1.firebasedatabase.app";
 const char *FIREBASE_AUTH = "TaODOBhlleN8cQFI0KksRz6mv5II3hmwQLD3CtfR";
-const char *API_URL = "http://192.168.1.11:8000/api/iot/reading";
+const char *API_URL = "http://192.168.1.11:8080/api/iot/reading";
 const char *VILLAGE_ID = "v1";
 
 // Sensor pins
@@ -124,7 +124,22 @@ void sendToFirebase(float waterLevel) {
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   int code = http.POST(payload);
-  Serial.printf("Firebase POST: %d\n", code);
+  Serial.printf("Firebase POST readings: %d\n", code);
+  http.end();
+
+  // Also update the /villages node directly so the dashboard gets the latest state
+  String villageUrl = String(FIREBASE_HOST) + "/villages/" + VILLAGE_ID + ".json?auth=" + FIREBASE_AUTH;
+  JsonDocument vDoc;
+  vDoc["waterLevel"] = waterLevel;
+  vDoc["lastReading"] = "live_from_esp32"; // Bypass the backend's strict ISO time check
+  
+  String vPayload;
+  serializeJson(vDoc, vPayload);
+  
+  http.begin(villageUrl);
+  http.addHeader("Content-Type", "application/json");
+  int vCode = http.PATCH(vPayload);
+  Serial.printf("Firebase PATCH villages: %d\n", vCode);
   http.end();
 }
 

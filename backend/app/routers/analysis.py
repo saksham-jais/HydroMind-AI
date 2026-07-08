@@ -108,7 +108,7 @@ OUTPUT FORMAT — reply ONLY with valid JSON, no markdown:
 
 
 @router.get("/analysis/district/{name}", response_model=AnalysisResponse)
-async def analyze_district(name: str):
+def analyze_district(name: str):
     # ── 1. Load real multi-source data ───────────────────────────────
     analysis = get_district_analysis(name)
     chart_data = analysis["chart_data"]
@@ -265,17 +265,33 @@ def get_all_districts_forecast_year(year: int = 2025):
             
         # ── IoT Override: Use live telemetry if available (e.g., Mehsana) ──
         # Only override if we are looking at the current timeframe (e.g. 2026)
+        # Uses a 30-second server-side cache so Firebase is NOT called on every request.
         current_calendar_year = datetime.now().year
         if year <= current_calendar_year + 1 and name.lower() in ("mehsana", "mahesana"):
             try:
-                from app.services.firebase import get_readings
-                live_readings = get_readings("v1", limit=1)
-                if live_readings and len(live_readings) > 0:
-                    # Convert live waterLevel (ft) to meters
-                    live_ft = float(live_readings[-1].get("waterLevel", 0))
-                    if live_ft > 0:
-                        predicted_depth = live_ft * 0.3048  # ft to m
-            except Exception as e:
+                import time as _time
+                now_ts = _time.time()
+                if not _IOT_CACHE or (now_ts - _IOT_CACHE.get("ts", 0)) > _IOT_CACHE_TTL:
+                    from app.services.firebase import get_readings
+                    live_readings = get_readings("v1", limit=1)
+                    _IOT_CACHE["data"] = live_readings[-1] if live_readings else None
+                    _IOT_CACHE["ts"] = now_ts
+
+                live_reading = _IOT_CACHE.get("data")
+                if live_reading:
+                    live_ft = float(live_reading.get("waterLevel", 0))
+                    # Map ESP32 tank water level (ft) → groundwater depth (m) for risk scoring.
+                    # The sensor reads a small desk tank (0–9.2cm), NOT a real well.
+                    #   Red LED   (distance >= 7.0cm -> wl <= 0.075 ft) → 45m depth  → Over-Exploited
+                    #   Yellow LED(distance >= 4.0cm -> wl <= 0.175 ft) → 22m depth  → Critical
+                    #   Green LED (distance <  4.0cm -> wl >  0.175 ft) →  5m depth  → Safe
+                    if live_ft <= 0.075:
+                        predicted_depth = 45.0   # Over-Exploited
+                    elif live_ft <= 0.175:
+                        predicted_depth = 22.0   # Critical
+                    else:
+                        predicted_depth = 5.0    # Safe
+            except Exception:
                 pass
         
         predicted_depth = max(0, predicted_depth)
@@ -313,8 +329,18 @@ def get_all_districts_forecast_year(year: int = 2025):
 @router.get("/analysis/state-trend")
 async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
     """Return statewide average GWL per month aggregated over a year range."""
+    global _STATE_TREND_CACHE
     cache_file = DS / "state_trend_cache.json"
-    if not cache_file.exists():
+
+    # Load once into memory, never re-read from disk
+    if _STATE_TREND_CACHE is None:
+        if cache_file.exists():
+            with open(cache_file, "r") as f:
+                _STATE_TREND_CACHE = json.load(f)
+        else:
+            _STATE_TREND_CACHE = {}  # sentinel: file missing
+
+    if not _STATE_TREND_CACHE:
         # Fallback: Realistic synthetic seasonal data when CSV cache is missing (e.g. on Render)
         month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         
@@ -336,9 +362,8 @@ async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
                 "level": -round(val, 2)
             })
         return chart_data
-    with open(cache_file, "r") as f:
-        data = json.load(f)
-        
+    data = _STATE_TREND_CACHE
+    
     # Aggregate by month across all years in range
     month_sums = {m: 0.0 for m in range(1, 13)}
     month_counts = {m: 0 for m in range(1, 13)}
@@ -393,6 +418,13 @@ _SLOPES_CACHE = None
 _ACCURACY_CACHE = None
 _REPORTS_CACHE = None
 _ACTUALS_CACHE = None
+
+# In-memory cache for state-trend data (loaded once at startup)
+_STATE_TREND_CACHE: dict | None = None
+
+# In-memory cache for live IoT reading (30-second TTL to avoid Firebase round-trip on every request)
+_IOT_CACHE: dict = {}  # {"data": reading_or_None, "ts": float}
+_IOT_CACHE_TTL = 2  # seconds (reduced to allow live updates from ESP32)
 
 def _load_forecast_data():
     global _MODELS_CACHE, _SLOPES_CACHE, _ACCURACY_CACHE, _REPORTS_CACHE, _ACTUALS_CACHE

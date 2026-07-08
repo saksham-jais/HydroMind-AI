@@ -40,39 +40,39 @@ def _init_firebase() -> bool:
         return False
 
 
+_villages_cache = (0, [])
+
 def get_villages() -> list[dict]:
+    global _villages_cache
+    now = time.time()
+    if now - _villages_cache[0] < 5:
+        return _villages_cache[1]
+        
     if _init_firebase() and _db:
-        ref = _db.reference("/villages")
-        fb_data = ref.get() or {}
-        if isinstance(fb_data, dict) and fb_data:
-            # Merge live Firebase fields (waterLevel, lastReading) ON TOP of full mock village data
-            # This preserves name/district/riskScore etc while showing the live ESP32 waterLevel
-            merged = []
-            for v in VILLAGES:
-                live = fb_data.get(v["id"], {})
-                if isinstance(live, dict) and "lastReading" in live:
-                    try:
-                        from datetime import timezone
-                        last_t = datetime.fromisoformat(live["lastReading"].replace("Z", "+00:00"))
-                        if (datetime.now(timezone.utc) - last_t).total_seconds() > 15:
-                            merged.append(v)
-                            continue
-                    except ValueError:
-                        pass
-                    
-                    v_updated = {**v, **live}
-                    # Update riskScore based on ESP32 desk demo logic to match hardware LEDs
-                    wl = v_updated.get("waterLevel", v["waterLevel"])
-                    if wl <= 0.13: # <= 4cm water depth (Red LED / Empty)
-                        v_updated["riskScore"] = 95
-                    elif wl <= 0.23: # 4-7cm water depth (Yellow LED / Filling)
-                        v_updated["riskScore"] = 65
-                    else: # > 7cm water depth (Green LED / Full)
-                        v_updated["riskScore"] = 25
-                    merged.append(v_updated)
-                else:
-                    merged.append(v)
-            return merged
+        try:
+            ref = _db.reference("/villages")
+            fb_data = ref.get() or {}
+            if isinstance(fb_data, dict) and fb_data:
+                merged = []
+                for v in VILLAGES:
+                    live = fb_data.get(v["id"], {})
+                    if isinstance(live, dict) and "waterLevel" in live:
+                        v_updated = {**v, **live}
+                        wl = float(v_updated.get("waterLevel", v["waterLevel"]))
+                        if wl <= 0.13:
+                            v_updated["riskScore"] = 95
+                        elif wl <= 0.23:
+                            v_updated["riskScore"] = 65
+                        else:
+                            v_updated["riskScore"] = 25
+                        merged.append(v_updated)
+                    else:
+                        merged.append(v)
+                _villages_cache = (now, merged)
+                return merged
+        except Exception:
+            pass
+    _villages_cache = (now, VILLAGES)
     return VILLAGES
 
 

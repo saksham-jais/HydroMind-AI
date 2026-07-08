@@ -17,6 +17,7 @@ export function TrendChart({ height = 280 }: { height?: number }) {
       if (!res.ok) throw new Error("Failed to fetch trend");
       return res.json();
     },
+    staleTime: 5 * 60_000, // 5 minutes — historical data never changes
   });
 
   const years = Array.from({ length: 2020 - 1950 + 1 }, (_, i) => (1950 + i).toString());

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { API_BASE } from "@/lib/api/client";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -36,7 +38,7 @@ function useForecast(district: string, category = "") {
     queryKey: ["districtForecast", district, category],
     queryFn: async () => {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/analysis/district-forecast/${encodeURIComponent(district)}?cgwb_category=${encodeURIComponent(category)}`
+        `${API_BASE}/analysis/district-forecast/${encodeURIComponent(district)}?cgwb_category=${encodeURIComponent(category)}`
       );
       if (!res.ok) throw new Error("Failed");
       return res.json();
@@ -52,7 +54,7 @@ function useAllDistrictForecasts() {
       const results = await Promise.all(
         ALL_DISTRICTS.map(async (d) => {
           try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/analysis/district-forecast/${encodeURIComponent(d)}`);
+            const res = await fetch(`${API_BASE}/analysis/district-forecast/${encodeURIComponent(d)}`);
             const data = await res.json();
             return { district: d, ...data };
           } catch {

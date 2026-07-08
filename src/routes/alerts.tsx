@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { API_BASE } from "@/lib/api/client";
+const API = API_BASE;
 
 export const Route = createFileRoute("/alerts")({
   ssr: false,

@@ -14,13 +14,41 @@ class SensorReading(BaseModel):
     sensorId: str = "HC-SR04"
 
 
+import time
+
+_last_reading_time = {}
+
 @router.post("/reading")
 async def post_reading(reading: SensorReading):
     """Receive sensor data from ESP32 via Firebase or direct API."""
-    stored = ingest_sensor_reading(reading.villageId, reading.waterLevel, reading.sensorId)
-    village = get_village(reading.villageId) or {"id": reading.villageId, "name": reading.villageId}
-    risk = predictor.risk(reading.villageId)
-    anomalies = predictor.anomalies(reading.villageId)
+    import asyncio
+    print(f"DEBUG: Received reading from {reading.villageId} via sensor {reading.sensorId}: {reading.waterLevel}ft")
+    
+    # --- RATE LIMITER: Drop requests faster than 5 seconds to prevent DDOS ---
+    now = time.time()
+    last = _last_reading_time.get(reading.villageId, 0)
+    if now - last < 5:
+        # Ignore this reading to protect the server
+        return {"status": "ignored", "reason": "rate_limited"}
+    _last_reading_time[reading.villageId] = now
+    
+    loop = asyncio.get_event_loop()
+    
+    # Run synchronous Firebase operations in a threadpool so they don't block the event loop
+    stored = await loop.run_in_executor(
+        None, lambda: ingest_sensor_reading(reading.villageId, reading.waterLevel, reading.sensorId)
+    )
+    village_data = await loop.run_in_executor(
+        None, lambda: get_village(reading.villageId)
+    )
+    village = village_data or {"id": reading.villageId, "name": reading.villageId}
+    
+    risk = await loop.run_in_executor(
+        None, lambda: predictor.risk(reading.villageId)
+    )
+    anomalies = await loop.run_in_executor(
+        None, lambda: predictor.anomalies(reading.villageId)
+    )
     anomaly_score = anomalies[0]["score"] if anomalies else None
     alert_result = await check_and_alert(
         {**village, "waterLevel": reading.waterLevel},

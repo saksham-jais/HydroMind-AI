@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, ZoomControl } from "react-leaflet";
 import { Play, Pause, RotateCcw, TrendingDown, AlertTriangle, Droplet, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { API_BASE } from "@/lib/api/client";
 
 export const Route = createFileRoute("/map")({
   ssr: false,
@@ -31,7 +32,7 @@ function AnimatedForecastMap({ year }: { year: number }) {
   const { data: districts = [], isFetching } = useQuery({
     queryKey: ["forecastYear", year],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/analysis/districts/forecast-year?year=${year}`);
+      const res = await fetch(`${API_BASE}/analysis/districts/forecast-year?year=${year}`);
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },

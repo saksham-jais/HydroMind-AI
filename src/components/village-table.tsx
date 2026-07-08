@@ -9,7 +9,7 @@ export function VillageTable({ limit, search = "" }: { limit?: number; search?: 
   const { data: villages = mockVillages } = useQuery({
     queryKey: ["villages"],
     queryFn: () => api.villages(),
-    refetchInterval: 2000,
+    refetchInterval: 5000,
     initialData: mockVillages
   });
 

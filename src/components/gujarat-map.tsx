@@ -27,14 +27,14 @@ export function GujaratMap({
    * and categories are 100% consistent across every page.
    */
   const { data: districts = [] } = useQuery({
-    queryKey: ["districtMapData"],  // same key as /map page → shared cache
+    queryKey: ["allDistrictsForecast2026"],  // shared cache with index.tsx → only ONE fetch for the whole app
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/analysis/districts/forecast-year?year=2026`);
       if (!res.ok) throw new Error("Failed to fetch map data");
       return res.json();
     },
     staleTime: 60_000,
-    refetchInterval: 60_000,
+    refetchInterval: 5000,
   });
 
   const q = search.toLowerCase().trim();

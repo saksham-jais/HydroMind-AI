@@ -7,7 +7,7 @@ export function useVillages() {
     queryKey: ["villages"],
     queryFn: api.villages,
     placeholderData: villages,
-    staleTime: 30_000,
+    staleTime: 2000,
     retry: 1,
   });
 }
@@ -19,7 +19,6 @@ export function useTotals() {
     placeholderData: totals,
     staleTime: 30_000,
     retry: 1,
-    refetchInterval: 2000,
   });
 }
 
@@ -30,7 +29,6 @@ export function useForecast(villageId = "v1") {
     placeholderData: { ...forecast, villageId },
     staleTime: 60_000,
     retry: 1,
-    refetchInterval: 2000,
   });
 }
 
@@ -41,7 +39,6 @@ export function useRisk(villageId = "v1") {
     placeholderData: { villageId, score: 87, category: "over-exploited", modelCategory: "over-exploited", confidence: 92 },
     staleTime: 60_000,
     retry: 1,
-    refetchInterval: 2000,
   });
 }
 
@@ -52,7 +49,6 @@ export function useAnomalies() {
     placeholderData: anomalies,
     staleTime: 30_000,
     retry: 1,
-    refetchInterval: 2000,
   });
 }
 
@@ -63,7 +59,6 @@ export function useCrisis(villageId = "v1") {
     placeholderData: { villageId, village: "Mehsana", criticalLevel: 150, predictedDate: "2027-02-14", remainingDays: 143 },
     staleTime: 60_000,
     retry: 1,
-    refetchInterval: 2000,
   });
 }
 

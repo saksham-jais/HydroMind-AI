@@ -203,13 +203,18 @@ async def _send_smtp_email(to_email: str, payload: dict) -> dict:
     msg.attach(MIMEText(_build_plain_text(payload), "plain"))
     msg.attach(MIMEText(_build_html_email(payload), "html"))
 
-    try:
+    def _send_sync():
         context = ssl.create_default_context()
         with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
             server.ehlo()
             server.starttls(context=context)
             server.login(settings.smtp_user, settings.smtp_password)
             server.sendmail(settings.smtp_user, to_email, msg.as_string())
+            
+    import asyncio
+    try:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _send_sync)
         logger.info("SMTP email sent to %s for village %s", to_email, village)
         return {"status": "sent", "dispatched": True, "channel": "smtp", "recipient": to_email}
     except Exception as e:
@@ -277,18 +282,35 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
     }
 
 
+_alert_state = {}
+
 async def check_and_alert(village: dict, risk_score: float, anomaly_score: float | None = None) -> dict | None:
     """Trigger alert dispatch if risk or anomaly thresholds exceeded."""
     should_alert = risk_score >= ALERT_THRESHOLD or (anomaly_score is not None and anomaly_score >= 0.8)
+    village_id = village.get("id")
+
     if not should_alert:
+        if village_id in _alert_state:
+            del _alert_state[village_id]
         return None
 
     water_level = village.get("waterLevel", "N/A")
+    try:
+        current_val = float(water_level)
+    except (ValueError, TypeError):
+        current_val = 0.0
+
+    if village_id in _alert_state:
+        last_val = _alert_state[village_id]
+        if current_val >= last_val:
+            return None
+            
+    _alert_state[village_id] = current_val
 
     payload = {
         "alertType": "groundwater_risk",
         "village": village.get("name"),
-        "villageId": village.get("id"),
+        "villageId": village_id,
         "district": village.get("district"),
         "riskScore": risk_score,
         "anomalyScore": anomaly_score,
