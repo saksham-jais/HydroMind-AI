@@ -11,6 +11,11 @@ class AlertDispatchRequest(BaseModel):
     villageId: str
     riskScore: float | None = None
     anomalyScore: float | None = None
+    officer: str | None = None
+    officerEmail: str | None = None
+    officerPhone: str | None = None
+    waterLevel: float | str | None = None
+    village: str | None = None
 
 
 @router.get("")
@@ -20,18 +25,39 @@ def list_alerts():
 
 @router.post("/dispatch")
 async def trigger_alert(req: AlertDispatchRequest):
-    village = get_village(req.villageId)
-    if not village:
-        return {"error": "Village not found"}
+    village = get_village(req.villageId) or {}
+    
+    # Merge frontend overrides with database data
+    village_name = req.village or village.get("name")
+    district = village.get("district", "Unknown")
     risk = req.riskScore if req.riskScore is not None else village.get("riskScore", 0)
-    result = await check_and_alert(village, risk, req.anomalyScore)
-    if result:
-        return result
+    officer = req.officer or village.get("officer")
+    email = req.officerEmail or village.get("officerEmail")
+    phone = req.officerPhone or village.get("officerPhone")
+    water = req.waterLevel if req.waterLevel is not None else village.get("waterLevel", "N/A")
+
+    # If it's a known village, check state machine first
+    if village.get("id"):
+        result = await check_and_alert({
+            **village,
+            "waterLevel": water,
+            "officer": officer,
+            "officerEmail": email,
+            "officerPhone": phone
+        }, risk, req.anomalyScore)
+        if result:
+            return result
+
+    # Manual dispatch fallback
     return await dispatch_alert({
-        "village": village.get("name"),
+        "alertType": "groundwater_risk",
+        "village": village_name,
         "villageId": req.villageId,
-        "district": village.get("district"),
+        "district": district,
         "riskScore": risk,
         "anomalyScore": req.anomalyScore,
-        "officerEmail": village.get("officerEmail"),
+        "officer": officer,
+        "officerEmail": email,
+        "officerPhone": phone,
+        "waterLevel": water,
     })
