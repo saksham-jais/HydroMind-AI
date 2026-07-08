@@ -41,6 +41,15 @@ async def post_reading(reading: SensorReading):
     village_data = await loop.run_in_executor(
         None, lambda: get_village(reading.villageId)
     )
+    if not village_data:
+        # Fallback: maybe the ESP32 sent the name instead of the ID
+        from app.services.firebase import get_villages
+        all_v = await loop.run_in_executor(None, get_villages)
+        for v in all_v:
+            if v.get("name", "").lower() == reading.villageId.lower():
+                village_data = v
+                break
+
     village = village_data or {"id": reading.villageId, "name": reading.villageId}
     
     risk = await loop.run_in_executor(
