@@ -70,6 +70,9 @@ Datasets/*
 !Datasets/model_comparison_report.json
 !Datasets/state_trend_cache.json
 !Datasets/telemetry_cache_2021_2025.json
+# Trained model artifacts (Datasets/)
+!Datasets/trained_best_models.joblib
+!Datasets/trained_linear_models.joblib
 
 # Stray files
 17435854451549973771file.pdf
