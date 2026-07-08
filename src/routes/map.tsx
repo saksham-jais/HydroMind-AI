@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, ZoomControl } from "react-leaflet";
-import { Play, Pause, RotateCcw, TrendingDown, AlertTriangle, Droplet, Info, Database, Brain } from "lucide-react";
+import { Play, Pause, RotateCcw, Droplet, Info, Database, Brain, X, BarChart2, TrendingDown, Waves } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
 
 export const Route = createFileRoute("/map")({
@@ -25,7 +25,6 @@ const MIN_YEAR   = HIST_START;
 const MAX_YEAR   = FORE_END;
 const PLAY_INTERVAL_MS = 700;
 
-// Decade ticks for the timeline
 const TICK_YEARS = [1991, 2000, 2010, 2020, 2030, 2040, 2050, 2060, 2075];
 
 const colorFor = (riskScore: number, category: string) => {
@@ -38,8 +37,146 @@ const colorFor = (riskScore: number, category: string) => {
   return { fill: "oklch(0.65 0.16 145)", stroke: "oklch(0.50 0.16 145)" };
 };
 
+// ── Discharge Side Panel ──────────────────────────────────────────────
+function DischargePanel({ district, onClose }: { district: string; onClose: () => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["discharge", district],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/analysis/districts/discharge?district=${encodeURIComponent(district)}`);
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    staleTime: 300_000,
+  });
+
+  const maxDischarge = data ? Math.max(...data.monthlyDischarge.map((m: any) => m.discharge_m3s), 1) : 1;
+  const maxDepth = data ? Math.max(...data.groundwaterTrend.map((g: any) => g.avg_depth_m), 1) : 1;
+  const CHART_H = 80;
+  const BAR_W = 18;
+
+  return (
+    <div className="absolute right-3 top-16 z-[1000] w-80 rounded-xl border border-border bg-white shadow-2xl">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div>
+          <div className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+            <Waves className="h-4 w-4 text-blue-500" />
+            {district} — River Discharge
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">CSV data from CGWB discharge stations</div>
+        </div>
+        <button onClick={onClose} className="rounded-full p-1 hover:bg-muted transition">
+          <X className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          <div className="animate-pulse">Loading discharge data…</div>
+        </div>
+      ) : data ? (
+        <div className="p-4 space-y-4">
+          {/* Monthly discharge bar chart */}
+          <div>
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+              <BarChart2 className="h-3.5 w-3.5 text-blue-500" />
+              Monthly Avg River Discharge (m³/s)
+            </div>
+            {data.hasDischargeData ? (
+              <svg width="100%" height={CHART_H + 24} viewBox={`0 0 ${BAR_W * 12} ${CHART_H + 24}`}>
+                {data.monthlyDischarge.map((m: any, i: number) => {
+                  const barH = maxDischarge > 0 ? (m.discharge_m3s / maxDischarge) * CHART_H : 0;
+                  const isMonsoon = i >= 5 && i <= 8; // Jun–Sep
+                  return (
+                    <g key={m.month}>
+                      <rect
+                        x={i * BAR_W + 1}
+                        y={CHART_H - barH}
+                        width={BAR_W - 3}
+                        height={barH}
+                        fill={isMonsoon ? "#3b82f6" : "#bfdbfe"}
+                        rx={2}
+                      />
+                      <text
+                        x={i * BAR_W + BAR_W / 2}
+                        y={CHART_H + 12}
+                        fontSize={7}
+                        textAnchor="middle"
+                        fill="#64748b"
+                      >
+                        {m.month}
+                      </text>
+                      {barH > 8 && (
+                        <text
+                          x={i * BAR_W + BAR_W / 2}
+                          y={CHART_H - barH - 2}
+                          fontSize={6}
+                          textAnchor="middle"
+                          fill="#1d4ed8"
+                        >
+                          {m.discharge_m3s > 0 ? m.discharge_m3s.toFixed(0) : ""}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            ) : (
+              <div className="rounded-lg bg-muted/50 px-3 py-4 text-center text-[11px] text-muted-foreground">
+                No river discharge station in this district
+              </div>
+            )}
+          </div>
+
+          {/* Groundwater trend mini line */}
+          {data.groundwaterTrend.length > 2 && (
+            <div>
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                <TrendingDown className="h-3.5 w-3.5 text-orange-500" />
+                Groundwater Depth Trend (m bgl)
+              </div>
+              <svg width="100%" height={60} viewBox={`0 0 ${data.groundwaterTrend.length * 10} 60`}>
+                {data.groundwaterTrend.map((g: any, i: number, arr: any[]) => {
+                  if (i === 0) return null;
+                  const prev = arr[i - 1];
+                  const x1 = (i - 1) * 10 + 5;
+                  const y1 = 55 - (prev.avg_depth_m / maxDepth) * 50;
+                  const x2 = i * 10 + 5;
+                  const y2 = 55 - (g.avg_depth_m / maxDepth) * 50;
+                  return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f97316" strokeWidth={1.5} />;
+                })}
+                {/* Year labels at start and end */}
+                {data.groundwaterTrend.length > 0 && (
+                  <>
+                    <text x={5} y={58} fontSize={6} fill="#94a3b8">{data.groundwaterTrend[0].year}</text>
+                    <text x={(data.groundwaterTrend.length - 1) * 10 + 1} y={58} fontSize={6} fill="#94a3b8">
+                      {data.groundwaterTrend[data.groundwaterTrend.length - 1].year}
+                    </text>
+                  </>
+                )}
+              </svg>
+            </div>
+          )}
+
+          {/* Insight */}
+          <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5">
+            <div className="mb-1 text-[10px] font-semibold text-blue-700 flex items-center gap-1">
+              💡 Correlation Insight
+            </div>
+            <p className="text-[10px] leading-relaxed text-blue-800">{data.insight}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 text-sm text-muted-foreground">Failed to load data.</div>
+      )}
+    </div>
+  );
+}
+
+
+
 // ── Map layer ─────────────────────────────────────────────────────────
-function DistrictMapLayer({ year }: { year: number }) {
+function DistrictMapLayer({ year, onDistrictClick }: { year: number; onDistrictClick: (name: string) => void }) {
   const isHistorical = year <= HIST_END;
 
   const { data: districts = [], isFetching } = useQuery({
@@ -89,6 +226,7 @@ function DistrictMapLayer({ year }: { year: number }) {
                 fillOpacity: 0.8,
                 weight: 1.5,
               }}
+              eventHandlers={{ click: () => onDistrictClick(d.name) }}
             >
               <Tooltip direction="top" offset={[0, -4]} opacity={1}>
                 <div className="min-w-[210px] text-xs">
@@ -96,7 +234,6 @@ function DistrictMapLayer({ year }: { year: number }) {
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-muted-foreground">
                     {isHistorical ? (
                       <>
-                        {/* Actual vs ML side by side */}
                         <span className="col-span-2 mb-0.5 flex items-center gap-1.5 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
                           📊 Actual vs 🤖 ML ({year})
                         </span>
@@ -104,15 +241,13 @@ function DistrictMapLayer({ year }: { year: number }) {
                         <span className="font-semibold text-blue-700">{d.predictedDepth_m.toFixed(1)} m bgl</span>
                         <span className="flex items-center gap-1">🤖 ML Model</span>
                         <span className={`font-semibold ${
-                          Math.abs(d.mlDepth_m - d.predictedDepth_m) < 3
-                            ? "text-green-600"
-                            : Math.abs(d.mlDepth_m - d.predictedDepth_m) < 7
-                            ? "text-orange-500"
-                            : "text-red-500"
+                          Math.abs((d.mlDepth_m ?? 0) - d.predictedDepth_m) < 3 ? "text-green-600"
+                          : Math.abs((d.mlDepth_m ?? 0) - d.predictedDepth_m) < 7 ? "text-orange-500"
+                          : "text-red-500"
                         }`}>{d.mlDepth_m?.toFixed(1) ?? "—"} m bgl</span>
                         <span>Error</span>
                         <span className={`font-semibold ${
-                          Math.abs(d.mlDepth_m - d.predictedDepth_m) < 3 ? "text-green-600" : "text-orange-500"
+                          Math.abs((d.mlDepth_m ?? 0) - d.predictedDepth_m) < 3 ? "text-green-600" : "text-orange-500"
                         }`}>
                           {d.mlDepth_m != null ? `±${Math.abs(d.mlDepth_m - d.predictedDepth_m).toFixed(1)} m` : "—"}
                         </span>
@@ -132,6 +267,7 @@ function DistrictMapLayer({ year }: { year: number }) {
                       : d.category === "Semi-Critical" ? "text-yellow-400"
                       : "text-green-400"
                     }`}>{d.category}</span>
+                    <span className="col-span-2 text-[9px] text-muted-foreground pt-0.5">Click circle for discharge data →</span>
                   </div>
                 </div>
               </Tooltip>
@@ -147,6 +283,7 @@ function DistrictMapLayer({ year }: { year: number }) {
 function MapPage() {
   const [year, setYear] = useState(2000);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isHistorical = year <= HIST_END;
 
@@ -214,8 +351,13 @@ function MapPage() {
       {/* ── Map ────────────────────────────────────────────────────── */}
       <div className="relative min-h-0 flex-1">
         <Suspense fallback={<div className="h-full w-full animate-pulse bg-muted" />}>
-          <DistrictMapLayer year={year} />
+          <DistrictMapLayer year={year} onDistrictClick={setSelectedDistrict} />
         </Suspense>
+
+        {/* Discharge side panel */}
+        {selectedDistrict && (
+          <DischargePanel district={selectedDistrict} onClose={() => setSelectedDistrict(null)} />
+        )}
 
         {/* Year overlay */}
         <div className="pointer-events-none absolute left-1/2 top-4 z-[999] -translate-x-1/2">

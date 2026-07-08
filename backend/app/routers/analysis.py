@@ -275,9 +275,140 @@ def _load_historical_csv() -> dict:
     return result
 
 
+
+# ── River Discharge CSV cache ──────────────────────────────────────────
+_DISCHARGE_CACHE: dict = {}
+
+def _load_discharge_csv() -> dict:
+    """Load river discharge data aggregated by district → year → month → [values]."""
+    global _DISCHARGE_CACHE
+    if _DISCHARGE_CACHE:
+        return _DISCHARGE_CACHE
+
+    import csv
+    from pathlib import Path
+
+    # {district: {year: {month: [discharge_values]}}}
+    agg: dict = {}
+
+    csv_files = [
+        Path("Datasets/riverdischarge_manual_daily_gujarat-sw-gw_gj_1950_2000.csv"),
+        Path("Datasets/river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv"),
+        Path("Datasets/river_discharge_manual_daily_gujarat_sw_gw_gj_2026_2030.csv"),
+    ]
+    for csv_path in csv_files:
+        if not csv_path.exists():
+            continue
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                district = row.get("District", "").strip()
+                t = row.get("Data Acquisition Time", "")
+                val_str = row.get("Manual Daily River Water Discharge (m3/sec)", "").strip()
+                if not district or not t or not val_str:
+                    continue
+                try:
+                    parts = t.split("-")
+                    year = int(parts[2][:4])
+                    month = int(parts[1])
+                    val = float(val_str)
+                    if val < 0:
+                        continue
+                    agg.setdefault(district, {}).setdefault(year, {}).setdefault(month, []).append(val)
+                except (ValueError, IndexError):
+                    continue
+
+    _DISCHARGE_CACHE = agg
+    return agg
+
+
+@router.get("/analysis/districts/discharge")
+def get_district_discharge(district: str):
+    """Return river discharge data and groundwater trends for a district.
+    Powers the correlation panel on the map page."""
+    discharge_data = _load_discharge_csv()
+    hist_data = _load_historical_csv()
+
+    # Try fuzzy district match for discharge data
+    d_lower = district.lower()
+    matched_key = next(
+        (k for k in discharge_data if k.lower() == d_lower), None
+    )
+    # Fallback to TAPI for Tapi district
+    if not matched_key:
+        for k in discharge_data:
+            if d_lower in k.lower() or k.lower() in d_lower:
+                matched_key = k
+                break
+
+    # ── Monthly discharge (averaged across all years, monsoon-focused) ──
+    MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    monthly_avg = {}  # month_num → avg m3/s
+    all_monthly: dict[int, list[float]] = {}
+
+    if matched_key:
+        for year_data in discharge_data[matched_key].values():
+            for month, vals in year_data.items():
+                all_monthly.setdefault(month, []).extend(vals)
+
+        for month, vals in all_monthly.items():
+            monthly_avg[month] = round(sum(vals) / len(vals), 2)
+
+    monthly_series = [
+        {"month": MONTHS[i], "discharge_m3s": monthly_avg.get(i + 1, 0)}
+        for i in range(12)
+    ]
+
+    # ── Yearly discharge trend ──────────────────────────────────────────
+    yearly_series = []
+    if matched_key:
+        for year, month_data in sorted(discharge_data[matched_key].items()):
+            all_vals = [v for vals in month_data.values() for v in vals]
+            if all_vals:
+                yearly_series.append({
+                    "year": year,
+                    "avg_discharge": round(sum(all_vals) / len(all_vals), 2),
+                    "peak_discharge": round(max(all_vals), 2),
+                })
+
+    # ── Groundwater depth trend for same district ───────────────────────
+    gw_dist_data = hist_data.get(district, {})
+    gw_trend = [
+        {"year": yr, "avg_depth_m": round(depth, 2)}
+        for yr, depth in sorted(gw_dist_data.items())
+        if 1991 <= yr <= 2020
+    ]
+
+    # ── Correlation insight ─────────────────────────────────────────────
+    peak_month = max(monthly_avg.items(), key=lambda x: x[1], default=(7, 0))
+    peak_discharge = peak_month[1]
+    peak_month_name = MONTHS[peak_month[0] - 1] if peak_month[0] <= 12 else "Jul"
+
+    has_data = bool(matched_key and monthly_avg)
+
+    return {
+        "district": district,
+        "hasDischargeData": has_data,
+        "monthlyDischarge": monthly_series,
+        "yearlyDischarge": yearly_series,
+        "groundwaterTrend": gw_trend,
+        "peakDischargeMonth": peak_month_name,
+        "peakDischarge_m3s": peak_discharge,
+        "insight": (
+            f"River discharge peaks in {peak_month_name} ({peak_discharge:.0f} m³/s). "
+            f"This monsoon recharge temporarily reduces groundwater extraction pressure, "
+            f"typically showing recovery in water table levels by Sep–Oct."
+        ) if has_data else (
+            f"No river discharge station data available for {district}. "
+            f"Groundwater recharge primarily depends on rainfall infiltration in this region."
+        )
+    }
+
+
 @router.get("/analysis/districts/historical-year")
 def get_historical_year(year: int = 2000):
     """Return actual CSV groundwater depth AND ML model prediction for all districts at a given historical year (1950–2020)."""
+
     hist = _load_historical_csv()
     models, slopes, accuracy, _, _ = _load_forecast_data()
 
