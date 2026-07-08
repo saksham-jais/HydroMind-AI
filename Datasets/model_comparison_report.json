@@ -1,0 +1,674 @@
+{
+  "Gandhinagar": {
+    "best": "LinearRegression",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 1.369,
+        "r2": -0.72
+      },
+      "XGBoost": {
+        "rmse": 2.505,
+        "r2": -4.757
+      },
+      "LightGBM": {
+        "rmse": 3.398,
+        "r2": -9.595
+      },
+      "CatBoost": {
+        "rmse": 2.602,
+        "r2": -5.21
+      }
+    }
+  },
+  "Ahmedabad": {
+    "best": "LightGBM",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.203,
+        "r2": -1.164
+      },
+      "XGBoost": {
+        "rmse": 1.981,
+        "r2": -0.749
+      },
+      "LightGBM": {
+        "rmse": 1.912,
+        "r2": -0.63
+      },
+      "CatBoost": {
+        "rmse": 1.935,
+        "r2": -0.669
+      }
+    }
+  },
+  "Botad": {
+    "best": "LightGBM",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.319,
+        "r2": -0.018
+      },
+      "XGBoost": {
+        "rmse": 2.826,
+        "r2": -0.512
+      },
+      "LightGBM": {
+        "rmse": 1.908,
+        "r2": 0.311
+      },
+      "CatBoost": {
+        "rmse": 2.398,
+        "r2": -0.089
+      }
+    }
+  },
+  "Junagadh": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 5.52,
+        "r2": 0.014
+      },
+      "XGBoost": {
+        "rmse": 4.253,
+        "r2": 0.415
+      },
+      "LightGBM": {
+        "rmse": 4.253,
+        "r2": 0.415
+      },
+      "CatBoost": {
+        "rmse": 4.246,
+        "r2": 0.417
+      }
+    }
+  },
+  "Amreli": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 6.67,
+        "r2": -0.037
+      },
+      "XGBoost": {
+        "rmse": 5.931,
+        "r2": 0.18
+      },
+      "LightGBM": {
+        "rmse": 5.931,
+        "r2": 0.18
+      },
+      "CatBoost": {
+        "rmse": 5.941,
+        "r2": 0.177
+      }
+    }
+  },
+  "Vadodara": {
+    "best": "LinearRegression",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.963,
+        "r2": -0.182
+      },
+      "XGBoost": {
+        "rmse": 7.999,
+        "r2": -0.193
+      },
+      "LightGBM": {
+        "rmse": 7.997,
+        "r2": -0.193
+      },
+      "CatBoost": {
+        "rmse": 7.988,
+        "r2": -0.19
+      }
+    }
+  },
+  "Chhota Udaipur": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.271,
+        "r2": -0.077
+      },
+      "XGBoost": {
+        "rmse": 1.678,
+        "r2": 0.413
+      },
+      "LightGBM": {
+        "rmse": 1.687,
+        "r2": 0.406
+      },
+      "CatBoost": {
+        "rmse": 1.665,
+        "r2": 0.421
+      }
+    }
+  },
+  "Narmada": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.946,
+        "r2": -0.403
+      },
+      "XGBoost": {
+        "rmse": 7.716,
+        "r2": -0.323
+      },
+      "LightGBM": {
+        "rmse": 7.717,
+        "r2": -0.323
+      },
+      "CatBoost": {
+        "rmse": 7.718,
+        "r2": -0.324
+      }
+    }
+  },
+  "Banaskantha": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 5.206,
+        "r2": -0.393
+      },
+      "XGBoost": {
+        "rmse": 4.764,
+        "r2": -0.166
+      },
+      "LightGBM": {
+        "rmse": 4.798,
+        "r2": -0.183
+      },
+      "CatBoost": {
+        "rmse": 4.788,
+        "r2": -0.178
+      }
+    }
+  },
+  "Navsari": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.563,
+        "r2": -0.864
+      },
+      "XGBoost": {
+        "rmse": 2.356,
+        "r2": -0.575
+      },
+      "LightGBM": {
+        "rmse": 2.357,
+        "r2": -0.576
+      },
+      "CatBoost": {
+        "rmse": 2.355,
+        "r2": -0.574
+      }
+    }
+  },
+  "Valsad": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.927,
+        "r2": -0.011
+      },
+      "XGBoost": {
+        "rmse": 1.921,
+        "r2": 0.564
+      },
+      "LightGBM": {
+        "rmse": 1.922,
+        "r2": 0.564
+      },
+      "CatBoost": {
+        "rmse": 1.928,
+        "r2": 0.561
+      }
+    }
+  },
+  "Bharuch": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.73,
+        "r2": -0.003
+      },
+      "XGBoost": {
+        "rmse": 2.276,
+        "r2": 0.303
+      },
+      "LightGBM": {
+        "rmse": 2.27,
+        "r2": 0.306
+      },
+      "CatBoost": {
+        "rmse": 2.268,
+        "r2": 0.307
+      }
+    }
+  },
+  "Bhavnagar": {
+    "best": "LightGBM",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.33,
+        "r2": -0.07
+      },
+      "XGBoost": {
+        "rmse": 6.261,
+        "r2": 0.22
+      },
+      "LightGBM": {
+        "rmse": 6.259,
+        "r2": 0.22
+      },
+      "CatBoost": {
+        "rmse": 6.287,
+        "r2": 0.213
+      }
+    }
+  },
+  "Dang": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 3.88,
+        "r2": -0.473
+      },
+      "XGBoost": {
+        "rmse": 2.98,
+        "r2": 0.131
+      },
+      "LightGBM": {
+        "rmse": 2.968,
+        "r2": 0.138
+      },
+      "CatBoost": {
+        "rmse": 2.967,
+        "r2": 0.139
+      }
+    }
+  },
+  "Devbhumi Dwarka": {
+    "best": "LightGBM",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.319,
+        "r2": -0.221
+      },
+      "XGBoost": {
+        "rmse": 5.81,
+        "r2": 0.23
+      },
+      "LightGBM": {
+        "rmse": 5.802,
+        "r2": 0.233
+      },
+      "CatBoost": {
+        "rmse": 5.916,
+        "r2": 0.202
+      }
+    }
+  },
+  "Jamnagar": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 5.726,
+        "r2": -0.171
+      },
+      "XGBoost": {
+        "rmse": 5.224,
+        "r2": 0.025
+      },
+      "LightGBM": {
+        "rmse": 5.223,
+        "r2": 0.025
+      },
+      "CatBoost": {
+        "rmse": 5.193,
+        "r2": 0.036
+      }
+    }
+  },
+  "Porbandar": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.67,
+        "r2": 0.124
+      },
+      "XGBoost": {
+        "rmse": 6.033,
+        "r2": 0.458
+      },
+      "LightGBM": {
+        "rmse": 6.088,
+        "r2": 0.448
+      },
+      "CatBoost": {
+        "rmse": 6.034,
+        "r2": 0.458
+      }
+    }
+  },
+  "Kachchh": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 6.796,
+        "r2": -0.087
+      },
+      "XGBoost": {
+        "rmse": 6.741,
+        "r2": -0.07
+      },
+      "LightGBM": {
+        "rmse": 6.741,
+        "r2": -0.07
+      },
+      "CatBoost": {
+        "rmse": 6.737,
+        "r2": -0.068
+      }
+    }
+  },
+  "Anand": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.9,
+        "r2": -14.402
+      },
+      "XGBoost": {
+        "rmse": 7.817,
+        "r2": -14.081
+      },
+      "LightGBM": {
+        "rmse": 7.817,
+        "r2": -14.081
+      },
+      "CatBoost": {
+        "rmse": 7.812,
+        "r2": -14.061
+      }
+    }
+  },
+  "Mahisagar": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 5.256,
+        "r2": -0.048
+      },
+      "XGBoost": {
+        "rmse": 3.789,
+        "r2": 0.456
+      },
+      "LightGBM": {
+        "rmse": 3.797,
+        "r2": 0.453
+      },
+      "CatBoost": {
+        "rmse": 3.822,
+        "r2": 0.446
+      }
+    }
+  },
+  "Kheda": {
+    "best": "LinearRegression",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.318,
+        "r2": -0.019
+      },
+      "XGBoost": {
+        "rmse": 7.42,
+        "r2": -0.047
+      },
+      "LightGBM": {
+        "rmse": 7.406,
+        "r2": -0.043
+      },
+      "CatBoost": {
+        "rmse": 7.393,
+        "r2": -0.039
+      }
+    }
+  },
+  "Mahesana": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 7.274,
+        "r2": -0.57
+      },
+      "XGBoost": {
+        "rmse": 7.046,
+        "r2": -0.473
+      },
+      "LightGBM": {
+        "rmse": 7.047,
+        "r2": -0.473
+      },
+      "CatBoost": {
+        "rmse": 7.071,
+        "r2": -0.483
+      }
+    }
+  },
+  "Patan": {
+    "best": "LinearRegression",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 3.699,
+        "r2": -3.315
+      },
+      "XGBoost": {
+        "rmse": 3.737,
+        "r2": -3.404
+      },
+      "LightGBM": {
+        "rmse": 3.744,
+        "r2": -3.422
+      },
+      "CatBoost": {
+        "rmse": 3.703,
+        "r2": -3.325
+      }
+    }
+  },
+  "Dohad": {
+    "best": "XGBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 4.193,
+        "r2": -0.03
+      },
+      "XGBoost": {
+        "rmse": 3.109,
+        "r2": 0.434
+      },
+      "LightGBM": {
+        "rmse": 3.109,
+        "r2": 0.434
+      },
+      "CatBoost": {
+        "rmse": 3.115,
+        "r2": 0.432
+      }
+    }
+  },
+  "Panchmahals": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 3.648,
+        "r2": -0.076
+      },
+      "XGBoost": {
+        "rmse": 3.296,
+        "r2": 0.122
+      },
+      "LightGBM": {
+        "rmse": 3.297,
+        "r2": 0.122
+      },
+      "CatBoost": {
+        "rmse": 3.29,
+        "r2": 0.125
+      }
+    }
+  },
+  "Morbi": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 6.419,
+        "r2": -1.57
+      },
+      "XGBoost": {
+        "rmse": 6.146,
+        "r2": -1.355
+      },
+      "LightGBM": {
+        "rmse": 6.148,
+        "r2": -1.357
+      },
+      "CatBoost": {
+        "rmse": 6.131,
+        "r2": -1.344
+      }
+    }
+  },
+  "Rajkot": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 6.972,
+        "r2": -0.078
+      },
+      "XGBoost": {
+        "rmse": 4.827,
+        "r2": 0.483
+      },
+      "LightGBM": {
+        "rmse": 4.827,
+        "r2": 0.483
+      },
+      "CatBoost": {
+        "rmse": 4.827,
+        "r2": 0.483
+      }
+    }
+  },
+  "Aravalli": {
+    "best": "LightGBM",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 6.402,
+        "r2": -0.083
+      },
+      "XGBoost": {
+        "rmse": 5.291,
+        "r2": 0.26
+      },
+      "LightGBM": {
+        "rmse": 5.284,
+        "r2": 0.262
+      },
+      "CatBoost": {
+        "rmse": 5.328,
+        "r2": 0.25
+      }
+    }
+  },
+  "Sabarkantha": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 5.385,
+        "r2": -0.733
+      },
+      "XGBoost": {
+        "rmse": 4.974,
+        "r2": -0.478
+      },
+      "LightGBM": {
+        "rmse": 4.975,
+        "r2": -0.479
+      },
+      "CatBoost": {
+        "rmse": 4.885,
+        "r2": -0.426
+      }
+    }
+  },
+  "Surendranagar": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 6.038,
+        "r2": -0.299
+      },
+      "XGBoost": {
+        "rmse": 5.486,
+        "r2": -0.073
+      },
+      "LightGBM": {
+        "rmse": 5.486,
+        "r2": -0.073
+      },
+      "CatBoost": {
+        "rmse": 5.485,
+        "r2": -0.072
+      }
+    }
+  },
+  "Surat": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 3.018,
+        "r2": -1.253
+      },
+      "XGBoost": {
+        "rmse": 2.85,
+        "r2": -1.009
+      },
+      "LightGBM": {
+        "rmse": 2.85,
+        "r2": -1.009
+      },
+      "CatBoost": {
+        "rmse": 2.847,
+        "r2": -1.004
+      }
+    }
+  },
+  "Tapi": {
+    "best": "CatBoost",
+    "scores": {
+      "LinearRegression": {
+        "rmse": 2.663,
+        "r2": -0.128
+      },
+      "XGBoost": {
+        "rmse": 1.586,
+        "r2": 0.6
+      },
+      "LightGBM": {
+        "rmse": 1.593,
+        "r2": 0.597
+      },
+      "CatBoost": {
+        "rmse": 1.582,
+        "r2": 0.602
+      }
+    }
+  }
+}

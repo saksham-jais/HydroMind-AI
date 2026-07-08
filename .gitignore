@@ -52,8 +52,24 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Large datasets - not tracked in git
-Datasets/
+# Datasets - only commit the files actively used by the code
+# Ignore everything in Datasets/ by default
+Datasets/*
+
+# ── Allow the 4 CSVs that are directly imported by backend code ──────
+# gwl quarterly manual (train_models.py + data_service.py)
+!Datasets/gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv
+!Datasets/gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv
+# CGWB 2024 district summary (data_service.py)
+!Datasets/cc0fd6e6-4171-43ab-94d0-33eb1416be14.csv
+# River discharge daily 2001-2025 (data_service.py + get_river_stats.py)
+!Datasets/river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv
+# Pre-computed JSON caches (small, safe to commit)
+!Datasets/district_forecast_accuracy.json
+!Datasets/district_forecast_slopes.json
+!Datasets/model_comparison_report.json
+!Datasets/state_trend_cache.json
+!Datasets/telemetry_cache_2021_2025.json
 
 # Stray files
 17435854451549973771file.pdf
