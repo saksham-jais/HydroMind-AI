@@ -61,7 +61,13 @@ export function TrendChart({ height = 280 }: { height?: number }) {
           ? "heavy agricultural extraction, particularly for the dry season (summer/Rabi crops), combined with high evaporation rates"
           : "rapid natural recharge driven by intense monsoon precipitation and surface runoff soaking into the aquifers";
         
-        return `Analyzing the selected range from ${selectedMonths[0]} to ${selectedMonths[1]}: The average groundwater level ${action} by ${(Math.abs(diff) * 3.28084).toFixed(1)}ft (moving from ${(Math.abs(p1.level) * 3.28084).toFixed(1)}ft to ${(Math.abs(p2.level) * 3.28084).toFixed(1)}ft below ground). This is primarily driven by ${reason}.`;
+        let dischargeText = "";
+        const avgDischarge = ((p1.discharge || 0) + (p2.discharge || 0)) / 2;
+        if (avgDischarge > 0) {
+            dischargeText = ` Average river discharge during this period was ${avgDischarge.toFixed(0)} m³/s.`;
+        }
+        
+        return `Analyzing the selected range from ${selectedMonths[0]} to ${selectedMonths[1]}: The average groundwater level ${action} by ${(Math.abs(diff) * 3.28084).toFixed(1)}ft (moving from ${(Math.abs(p1.level) * 3.28084).toFixed(1)}ft to ${(Math.abs(p2.level) * 3.28084).toFixed(1)}ft below ground). This is primarily driven by ${reason}.${dischargeText}`;
       }
     }
 

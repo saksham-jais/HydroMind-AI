@@ -603,6 +603,15 @@ async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
         else:
             _STATE_TREND_CACHE = {}  # sentinel: file missing
 
+    discharge_data = _load_discharge_csv()
+    state_discharge = {m: [] for m in range(1, 13)}
+    for district, yrs in discharge_data.items():
+        for yr, mos in yrs.items():
+            if start_year <= yr <= end_year:
+                for mo, vals in mos.items():
+                    state_discharge[mo].extend(vals)
+    discharge_avgs = {m: (sum(vals) / len(vals) if vals else 0.0) for m, vals in state_discharge.items()}
+
     if not _STATE_TREND_CACHE:
         # Fallback: Realistic synthetic seasonal data when CSV cache is missing (e.g. on Render)
         month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -622,9 +631,11 @@ async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
             val = 12.0 + depletion_offset + seasonal_pattern[m]
             chart_data.append({
                 "month": month_labels[m - 1],
-                "level": -round(val, 2)
+                "level": -round(val, 2),
+                "discharge": round(discharge_avgs[m], 2)
             })
         return chart_data
+    
     data = _STATE_TREND_CACHE
     
     # Aggregate by month across all years in range
@@ -670,7 +681,8 @@ async def get_state_trend(start_year: int = 1991, end_year: int = 2020):
         # Return negative values for "depth below ground" so the chart visualizes it correctly
         chart_data.append({
             "month": month_labels[m - 1],
-            "level": -round(val, 2)
+            "level": -round(val, 2),
+            "discharge": round(discharge_avgs[m], 2)
         })
         
     return chart_data
