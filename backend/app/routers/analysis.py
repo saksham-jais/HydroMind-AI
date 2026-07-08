@@ -238,12 +238,15 @@ def _load_historical_csv() -> dict:
     import csv
     from pathlib import Path
     
+    # Path to the root Datasets folder
+    data_dir = Path(__file__).resolve().parents[3] / "Datasets"
+    
     # Aggregation: {district -> {year -> [depths]}}
     agg: dict[str, dict[int, list[float]]] = {}
     
     csv_files = [
-        Path("Datasets/gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv"),
-        Path("Datasets/gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv"),
+        data_dir / "gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv",
+        data_dir / "gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv",
     ]
     for csv_path in csv_files:
         if not csv_path.exists():
@@ -287,14 +290,17 @@ def _load_discharge_csv() -> dict:
 
     import csv
     from pathlib import Path
+    
+    # Path to the root Datasets folder
+    data_dir = Path(__file__).resolve().parents[3] / "Datasets"
 
     # {district: {year: {month: [discharge_values]}}}
     agg: dict = {}
 
     csv_files = [
-        Path("Datasets/riverdischarge_manual_daily_gujarat-sw-gw_gj_1950_2000.csv"),
-        Path("Datasets/river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv"),
-        Path("Datasets/river_discharge_manual_daily_gujarat_sw_gw_gj_2026_2030.csv"),
+        data_dir / "riverdischarge_manual_daily_gujarat-sw-gw_gj_1950_2000.csv",
+        data_dir / "river_discharge_manual_daily_gujarat_sw_gw_gj_2001_2025.csv",
+        data_dir / "river_discharge_manual_daily_gujarat_sw_gw_gj_2026_2030.csv",
     ]
     for csv_path in csv_files:
         if not csv_path.exists():
