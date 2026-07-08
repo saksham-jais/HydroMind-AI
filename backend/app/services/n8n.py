@@ -72,6 +72,12 @@ def _build_html_email(payload: dict) -> str:
     officer    = payload.get("officer", "District Officer")
     water_lvl  = payload.get("waterLevel", "N/A")
     timestamp  = payload.get("timestamp", datetime.utcnow().isoformat())
+    if "Z" in timestamp:
+        try:
+            dt = datetime.fromisoformat(timestamp.replace("Z", ""))
+            timestamp = dt.strftime("%d %b %Y, %I:%M %p (IST)")
+        except Exception:
+            pass
     actions    = payload.get("actions_detail", _recommended_actions(risk, anomaly))
     risk_label = _risk_level(risk)
 
@@ -227,7 +233,13 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
     Send alert via available channels (SMTP, WhatsApp officer, WhatsApp regional contacts).
     Enriches payload with recommended actions and risk level before sending.
     """
-    payload.setdefault("timestamp", datetime.utcnow().isoformat() + "Z")
+    from datetime import datetime, timedelta
+    
+    # The WhatsApp bot on Render prints the time in UTC. 
+    # To fix this, we artificially shift the timestamp forward by +05:30 (IST)
+    # so that when the bot prints the "UTC" time, it actually displays the correct local IST time.
+    ist_time = datetime.utcnow() + timedelta(hours=5, minutes=30)
+    payload.setdefault("timestamp", ist_time.isoformat() + "Z")
     payload.setdefault("source", "hydromind-api")
 
     risk    = float(payload.get("riskScore", 0))
