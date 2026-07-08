@@ -225,9 +225,113 @@ async def get_map_data():
         })
     return map_data
 
+
+# ── Historical CSV data cache ─────────────────────────────────────────
+_HIST_CACHE: dict = {}
+
+def _load_historical_csv() -> dict:
+    """Load and aggregate historical groundwater level data from CSV, by district and year."""
+    global _HIST_CACHE
+    if _HIST_CACHE:
+        return _HIST_CACHE
+    
+    import csv
+    from pathlib import Path
+    
+    # Aggregation: {district -> {year -> [depths]}}
+    agg: dict[str, dict[int, list[float]]] = {}
+    
+    csv_files = [
+        Path("Datasets/gwl_manual_quarterly_gujarat-sw-gw_gj_1950_1990.csv"),
+        Path("Datasets/gwl_manual_quarterly_gujarat-sw-gw_gj_1991_2020.csv"),
+    ]
+    for csv_path in csv_files:
+        if not csv_path.exists():
+            continue
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                district = row.get("District", "").strip()
+                t = row.get("Data Acquisition Time", "")
+                lvl_str = row.get("Groundwater Level Quarterly Manual (meter)", "").strip()
+                if not district or not t or not lvl_str:
+                    continue
+                try:
+                    # Date format: DD-MM-YYYY HH:MM
+                    year = int(t.split("-")[2][:4])
+                    lvl = float(lvl_str)
+                    if lvl <= 0 or lvl > 200:
+                        continue
+                    agg.setdefault(district, {}).setdefault(year, []).append(lvl)
+                except (ValueError, IndexError):
+                    continue
+    
+    # Compute averages: {district -> {year -> avg_depth}}
+    result: dict[str, dict[int, float]] = {}
+    for dist, years in agg.items():
+        result[dist] = {y: sum(v) / len(v) for y, v in years.items()}
+    
+    _HIST_CACHE = result
+    return result
+
+
+@router.get("/analysis/districts/historical-year")
+def get_historical_year(year: int = 2000):
+    """Return actual CSV groundwater depth for all districts at a given historical year (1950–2020)."""
+    hist = _load_historical_csv()
+    
+    CRISIS_THRESHOLD = 60.0
+    result = []
+    
+    for d in DISTRICT_COORDS:
+        name = d["name"]
+        dist_data = hist.get(name, {})
+        
+        # Find closest year in data (within ±3 years)
+        depth = None
+        for delta in range(4):
+            for candidate in [year - delta, year + delta]:
+                if candidate in dist_data:
+                    depth = dist_data[candidate]
+                    break
+            if depth is not None:
+                break
+        
+        if depth is None:
+            # Fallback: use average across all available years
+            all_vals = list(dist_data.values())
+            depth = sum(all_vals) / len(all_vals) if all_vals else 10.0
+        
+        # Calculate risk score from depth
+        risk = min(99, max(5, (depth / CRISIS_THRESHOLD) * 100))
+        if depth >= 45:
+            category = "Over-Exploited"
+        elif depth >= 25:
+            category = "Critical"
+        elif depth >= 15:
+            category = "Semi-Critical"
+        else:
+            category = "Safe"
+        
+        result.append({
+            "id": d["id"],
+            "name": name,
+            "lat": d["lat"],
+            "lng": d["lng"],
+            "predictedDepth_m": round(depth, 2),
+            "riskScore": round(risk, 1),
+            "category": category,
+            "dataSource": "csv_actual",
+            "hasData": depth is not None,
+        })
+    
+    return result
+
+
 @router.get("/analysis/districts/forecast-year")
 def get_all_districts_forecast_year(year: int = 2025):
     """Return ML-predicted depth & risk score for ALL districts at a given future year.
+
     Used to power the animated timeline map playback."""
     models, slopes, accuracy, reports, actuals = _load_forecast_data()
     

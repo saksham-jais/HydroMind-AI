@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useState, useEffect, useRef, useCallback } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, ZoomControl } from "react-leaflet";
-import { Play, Pause, RotateCcw, TrendingDown, AlertTriangle, Droplet, Info } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Play, Pause, RotateCcw, TrendingDown, AlertTriangle, Droplet, Info, Database, Brain } from "lucide-react";
 import { API_BASE } from "@/lib/api/client";
 
 export const Route = createFileRoute("/map")({
@@ -11,40 +10,57 @@ export const Route = createFileRoute("/map")({
   head: () => ({
     meta: [
       { title: "Forecast Map · HydroMind AI" },
-      { name: "description", content: "Animated AI-powered future groundwater depletion forecast for Gujarat." },
+      { name: "description", content: "Historical & AI-forecast groundwater timeline for Gujarat, 1991–2075." },
     ],
   }),
   component: MapPage,
 });
 
-const MIN_YEAR = 2026;
-const MAX_YEAR = 2075;
-const PLAY_INTERVAL_MS = 800;
+// ── Constants ─────────────────────────────────────────────────────────
+const HIST_START = 1991;
+const HIST_END   = 2020;
+const FORE_START = 2021;
+const FORE_END   = 2075;
+const MIN_YEAR   = HIST_START;
+const MAX_YEAR   = FORE_END;
+const PLAY_INTERVAL_MS = 700;
+
+// Decade ticks for the timeline
+const TICK_YEARS = [1991, 2000, 2010, 2020, 2030, 2040, 2050, 2060, 2075];
 
 const colorFor = (riskScore: number, category: string) => {
-  if (category === "Over-Exploited" || riskScore >= 85) return { fill: "oklch(0.58 0.22 27)", stroke: "oklch(0.45 0.22 27)" };
-  if (category === "Critical" || riskScore >= 70) return { fill: "oklch(0.65 0.18 45)", stroke: "oklch(0.50 0.18 45)" };
-  if (category === "Semi-Critical" || riskScore >= 50) return { fill: "oklch(0.78 0.16 75)", stroke: "oklch(0.62 0.16 75)" };
+  if (category === "Over-Exploited" || riskScore >= 85)
+    return { fill: "oklch(0.58 0.22 27)", stroke: "oklch(0.45 0.22 27)" };
+  if (category === "Critical" || riskScore >= 70)
+    return { fill: "oklch(0.65 0.18 45)", stroke: "oklch(0.50 0.18 45)" };
+  if (category === "Semi-Critical" || riskScore >= 50)
+    return { fill: "oklch(0.78 0.16 75)", stroke: "oklch(0.62 0.16 75)" };
   return { fill: "oklch(0.65 0.16 145)", stroke: "oklch(0.50 0.16 145)" };
 };
 
-function AnimatedForecastMap({ year }: { year: number }) {
+// ── Map layer ─────────────────────────────────────────────────────────
+function DistrictMapLayer({ year }: { year: number }) {
+  const isHistorical = year <= HIST_END;
+
   const { data: districts = [], isFetching } = useQuery({
-    queryKey: ["forecastYear", year],
+    queryKey: [isHistorical ? "historicalYear" : "forecastYear", year],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/analysis/districts/forecast-year?year=${year}`);
+      const endpoint = isHistorical
+        ? `${API_BASE}/analysis/districts/historical-year?year=${year}`
+        : `${API_BASE}/analysis/districts/forecast-year?year=${year}`;
+      const res = await fetch(endpoint);
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
-    staleTime: 60000,
+    staleTime: 120_000,
   });
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-lg">
       {isFetching && (
         <div className="absolute right-3 top-3 z-[999] flex items-center gap-1.5 rounded-full bg-card/90 px-2.5 py-1 text-[10px] text-muted-foreground backdrop-blur">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warning" />
-          Computing...
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+          {isHistorical ? "Loading CSV data…" : "Computing forecast…"}
         </div>
       )}
       <MapContainer
@@ -56,12 +72,12 @@ function AnimatedForecastMap({ year }: { year: number }) {
       >
         <TileLayer
           attribution="&copy; OpenStreetMap"
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         <ZoomControl position="topright" />
         {districts.map((d: any) => {
           const colors = colorFor(d.riskScore, d.category);
-          const radius = 8 + d.riskScore / 10;
+          const radius = 7 + d.riskScore / 12;
           return (
             <CircleMarker
               key={d.id}
@@ -70,30 +86,29 @@ function AnimatedForecastMap({ year }: { year: number }) {
               pathOptions={{
                 color: colors.stroke,
                 fillColor: colors.fill,
-                fillOpacity: 0.75,
-                weight: 2,
+                fillOpacity: 0.8,
+                weight: 1.5,
               }}
             >
               <Tooltip direction="top" offset={[0, -4]} opacity={1}>
-                <div className="min-w-[160px] text-xs">
-                  <div className="mb-1 font-semibold text-sm">{d.name}</div>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-muted-foreground">
-                    <span>Predicted {year}</span>
-                    <span className="font-medium text-foreground">{d.predictedDepth_m.toFixed(1)} m bgl</span>
+                <div className="min-w-[180px] text-xs">
+                  <div className="mb-1.5 font-bold text-sm">{d.name}</div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-muted-foreground">
+                    <span>{isHistorical ? "Recorded" : "Predicted"} {year}</span>
+                    <span className="font-semibold text-foreground">{d.predictedDepth_m.toFixed(1)} m bgl</span>
                     <span>Risk Score</span>
-                    <span className="font-medium text-foreground">{Math.round(d.riskScore)}%</span>
+                    <span className="font-semibold text-foreground">{Math.round(d.riskScore)}%</span>
                     <span>Status</span>
-                    <span className={`font-medium ${d.category === "Over-Exploited" ? "text-red-400" : d.category === "Critical" ? "text-orange-400" : d.category === "Semi-Critical" ? "text-yellow-400" : "text-green-400"}`}>
-                      {d.category}
+                    <span className={`font-semibold ${
+                      d.category === "Over-Exploited" ? "text-red-400"
+                      : d.category === "Critical" ? "text-orange-400"
+                      : d.category === "Semi-Critical" ? "text-yellow-400"
+                      : "text-green-400"
+                    }`}>{d.category}</span>
+                    <span>Source</span>
+                    <span className="font-semibold text-foreground">
+                      {isHistorical ? "📊 CSV Data" : "🤖 ML Model"}
                     </span>
-                    {d.annualDeclineRate_m > 0 && (
-                      <>
-                        <span>Crisis in</span>
-                        <span className="font-medium text-foreground">
-                          {d.yearsToCrisis < 9999 ? `~${Math.round(d.yearsToCrisis)} yrs` : "Stable"}
-                        </span>
-                      </>
-                    )}
                   </div>
                 </div>
               </Tooltip>
@@ -105,10 +120,12 @@ function AnimatedForecastMap({ year }: { year: number }) {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────
 function MapPage() {
-  const [year, setYear] = useState(MIN_YEAR);
+  const [year, setYear] = useState(2000);
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isHistorical = year <= HIST_END;
 
   const stopPlayback = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -120,39 +137,47 @@ function MapPage() {
     setIsPlaying(true);
     intervalRef.current = setInterval(() => {
       setYear(prev => {
-        if (prev >= MAX_YEAR) {
-          stopPlayback();
-          return MAX_YEAR;
-        }
+        if (prev >= MAX_YEAR) { stopPlayback(); return MAX_YEAR; }
         return prev + 1;
       });
     }, PLAY_INTERVAL_MS);
   }, [year, stopPlayback]);
 
   useEffect(() => {
-    if (isPlaying) {
-      if (year >= MAX_YEAR) stopPlayback();
-    }
+    if (isPlaying && year >= MAX_YEAR) stopPlayback();
   }, [year, isPlaying, stopPlayback]);
 
-  // Cleanup on unmount
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
-  const reset = () => {
-    stopPlayback();
-    setYear(MIN_YEAR);
-  };
+  const reset = () => { stopPlayback(); setYear(HIST_START); };
 
-  const yearsFromNow = year - 2026;
-  const progressPct = ((year - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)) * 100;
+  // Progress calculations
+  const totalSpan = MAX_YEAR - MIN_YEAR;
+  const histSpan  = HIST_END - MIN_YEAR;
+  const histPct   = (histSpan / totalSpan) * 100;
+  const progressPct = ((year - MIN_YEAR) / totalSpan) * 100;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col gap-0 overflow-hidden">
-      {/* Header bar */}
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-background">
+
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-card/80 px-5 py-3 backdrop-blur">
         <div>
-          <h1 className="text-base font-semibold">AI Groundwater Forecast Timeline</h1>
-          <p className="text-[11px] text-muted-foreground">Linear Regression model predicting district depletion across Gujarat · 2026 – 2075</p>
+          <h1 className="text-base font-semibold">Gujarat Groundwater Timeline</h1>
+          <p className="text-[11px] text-muted-foreground">
+            Historical CGWB CSV data (1991–2020) · ML Linear Regression forecast (2021–2075)
+          </p>
+        </div>
+        {/* Mode badge */}
+        <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all ${
+          isHistorical
+            ? "bg-primary/20 text-primary"
+            : "bg-orange-500/20 text-orange-400"
+        }`}>
+          {isHistorical
+            ? <><Database className="h-3 w-3" /> Historical CSV Data</>
+            : <><Brain className="h-3 w-3" /> ML Forecast</>
+          }
         </div>
         {/* Legend */}
         <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
@@ -163,44 +188,87 @@ function MapPage() {
         </div>
       </div>
 
-      {/* Map */}
+      {/* ── Map ────────────────────────────────────────────────────── */}
       <div className="relative min-h-0 flex-1">
         <Suspense fallback={<div className="h-full w-full animate-pulse bg-muted" />}>
-          <AnimatedForecastMap year={year} />
+          <DistrictMapLayer year={year} />
         </Suspense>
 
         {/* Year overlay */}
         <div className="pointer-events-none absolute left-1/2 top-4 z-[999] -translate-x-1/2">
-          <div className="rounded-xl border border-border bg-card/90 px-6 py-3 text-center shadow-xl backdrop-blur">
-            <div className="text-5xl font-bold tabular-nums tracking-tight text-foreground">{year}</div>
-            <div className={`mt-1 text-xs font-medium ${yearsFromNow === 0 ? "text-safe" : yearsFromNow < 15 ? "text-warning" : "text-critical"}`}>
-              {yearsFromNow === 0 ? "Current Year" : `+${yearsFromNow} years from now`}
+          <div className={`rounded-xl border px-6 py-3 text-center shadow-xl backdrop-blur transition-colors ${
+            isHistorical
+              ? "border-primary/30 bg-card/90"
+              : "border-orange-500/30 bg-card/90"
+          }`}>
+            <div className="text-5xl font-bold tabular-nums tracking-tight">{year}</div>
+            <div className={`mt-1 text-xs font-medium ${isHistorical ? "text-primary" : "text-orange-400"}`}>
+              {isHistorical ? "📊 Recorded Data" : `🤖 AI Forecast · +${year - 2026} yrs`}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Timeline Controls */}
-      <div className="shrink-0 border-t border-border bg-card/95 px-5 py-3 backdrop-blur">
-        {/* Progress bar */}
-        <div className="relative mb-3">
+      {/* ── Timeline Controls ──────────────────────────────────────── */}
+      <div className="shrink-0 border-t border-border bg-card/95 px-5 py-4 backdrop-blur">
+
+        {/* Timeline track with dual zones */}
+        <div className="relative mb-1">
+          {/* Background track: historical vs forecast */}
+          <div className="absolute inset-y-0 left-0 h-full w-full pointer-events-none" style={{ top: "50%", transform: "translateY(-50%)", height: "6px", borderRadius: "4px" }}>
+            <div className="h-full w-full rounded overflow-hidden flex">
+              <div
+                className="h-full bg-gradient-to-r from-primary/60 to-primary/30"
+                style={{ width: `${histPct}%` }}
+              />
+              <div
+                className="h-full bg-gradient-to-r from-orange-600/50 to-red-700/50"
+                style={{ width: `${100 - histPct}%` }}
+              />
+            </div>
+          </div>
+
           <input
             type="range"
             min={MIN_YEAR}
             max={MAX_YEAR}
             value={year}
             onChange={(e) => { stopPlayback(); setYear(Number(e.target.value)); }}
-            className="w-full cursor-pointer accent-primary"
+            className="relative w-full cursor-pointer"
             style={{
-              background: `linear-gradient(to right, oklch(0.58 0.22 27) 0%, oklch(0.78 0.16 75) 40%, oklch(0.65 0.16 145) 100%)`,
+              WebkitAppearance: "none",
+              appearance: "none",
+              height: "6px",
+              borderRadius: "4px",
+              background: "transparent",
+              outline: "none",
             }}
           />
-          {/* Tick marks */}
-          <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
-            {[2026, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075].map(y => (
-              <span key={y} className={year === y ? "font-bold text-foreground" : ""}>{y}</span>
-            ))}
-          </div>
+        </div>
+
+        {/* Tick labels */}
+        <div className="relative mb-3 h-5">
+          {TICK_YEARS.map(y => {
+            const pct = ((y - MIN_YEAR) / totalSpan) * 100;
+            const isHistYear = y <= HIST_END;
+            return (
+              <button
+                key={y}
+                onClick={() => { stopPlayback(); setYear(y); }}
+                className="absolute -translate-x-1/2 text-[9px] transition hover:text-foreground"
+                style={{
+                  left: `${pct}%`,
+                  color: year === y ? "white" : isHistYear ? "oklch(0.7 0.15 250)" : "oklch(0.65 0.15 45)",
+                  fontWeight: year === y ? 700 : 400,
+                }}
+              >
+                {y}
+                {y === HIST_END && (
+                  <span className="block text-center text-[8px] leading-none opacity-60">CSV→ML</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Controls row */}
@@ -208,7 +276,7 @@ function MapPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={reset}
-              title="Reset to 2026"
+              title="Reset to 1991"
               className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition hover:bg-accent hover:text-foreground"
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -217,7 +285,7 @@ function MapPage() {
               onClick={isPlaying ? stopPlayback : startPlayback}
               className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-all ${
                 isPlaying
-                  ? "bg-warning hover:bg-warning/80"
+                  ? "bg-orange-500 hover:bg-orange-500/80"
                   : "bg-primary hover:bg-primary/80"
               }`}
             >
@@ -226,32 +294,63 @@ function MapPage() {
             <div className="ml-2 text-xs text-muted-foreground">
               {isPlaying ? (
                 <span className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warning" />
-                  Playing forecast timeline…
+                  <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${isHistorical ? "bg-primary" : "bg-orange-400"}`} />
+                  {isHistorical ? "Playing historical data…" : "Playing AI forecast…"}
                 </span>
               ) : (
-                "Press play to animate AI predictions"
+                <span>Drag or click year ticks · Press ▶ to animate</span>
               )}
             </div>
           </div>
 
-          {/* Stats for current year */}
+          {/* Divider between zones */}
+          <div className="hidden items-center gap-2 text-[10px] sm:flex">
+            <span className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-primary">
+              <Database className="h-2.5 w-2.5" /> 1991–2020 CSV
+            </span>
+            <span className="text-muted-foreground">→</span>
+            <span className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-orange-400">
+              <Brain className="h-2.5 w-2.5" /> 2021–2075 ML
+            </span>
+          </div>
+
+          {/* Stats */}
           <div className="flex items-center gap-5 text-[11px]">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Droplet className="h-3.5 w-3.5 text-primary" />
-              <span>Avg depth: <strong className="text-foreground">{(10 + yearsFromNow * 0.25).toFixed(1)} m bgl</strong></span>
+              <span>Mode: <strong className={isHistorical ? "text-primary" : "text-orange-400"}>
+                {isHistorical ? "Historical" : "AI Forecast"}
+              </strong></span>
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground">
-              <AlertTriangle className="h-3.5 w-3.5 text-critical" />
-              <span>At-risk districts: <strong className="text-critical">{Math.min(33, 8 + Math.floor(yearsFromNow * 0.35))}</strong></span>
-            </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Info className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[10px]">Click any circle for details · Model: Linear Regression (2005–2020 data)</span>
+              <Info className="h-3.5 w-3.5" />
+              <span className="text-[10px]">Hover circles for details</span>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: white;
+          border: 3px solid ${isHistorical ? "oklch(0.65 0.2 250)" : "oklch(0.65 0.18 45)"};
+          cursor: pointer;
+          box-shadow: 0 0 8px rgba(0,0,0,0.4);
+          transition: border-color 0.3s;
+        }
+        input[type="range"]::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: white;
+          border: 3px solid ${isHistorical ? "oklch(0.65 0.2 250)" : "oklch(0.65 0.18 45)"};
+          cursor: pointer;
+        }
+      `}</style>
     </div>
   );
 }
