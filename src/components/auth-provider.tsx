@@ -12,17 +12,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!localStorage.getItem("hydromind_user");
+  });
+  
+  const [user, setUser] = useState<any>(() => {
+    const storedUser = localStorage.getItem("hydromind_user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
-  // Check local storage on mount
+  // Check local storage on mount (kept for cross-tab sync if needed, though state is already initialized)
   useEffect(() => {
     const storedUser = localStorage.getItem("hydromind_user");
-    if (storedUser) {
+    if (storedUser && !isAuthenticated) {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const login = async (userid: string, password: string) => {
     try {
