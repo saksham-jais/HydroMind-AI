@@ -330,11 +330,19 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
 
 
 
-_alert_state = {}
+_alert_state = {}  # Maps village_id to state string
 
 async def check_and_alert(village: dict, risk_score: float, anomaly_score: float | None = None) -> dict | None:
-    """Trigger alert dispatch only on state transitions (e.g. Safe→Critical)."""
+    """Trigger alert dispatch only on escalations into higher danger states."""
     village_id = village.get("id")
+
+    # Define state severities
+    SEVERITY = {
+        "safe": 0,
+        "anomaly": 1,
+        "critical": 2,
+        "over_exploited": 3
+    }
 
     # Determine current alert category from risk score
     if risk_score >= 85:
@@ -347,23 +355,21 @@ async def check_and_alert(village: dict, risk_score: float, anomaly_score: float
         current_state = "safe"
 
     last_state = _alert_state.get(village_id, "safe")
+    curr_sev = SEVERITY[current_state]
+    last_sev = SEVERITY[last_state]
 
-    # Update state
-    _alert_state[village_id] = current_state
-
-    # Only alert on transitions INTO a danger state
+    # If it is safe, reset the state and do not alert
     if current_state == "safe":
+        _alert_state[village_id] = "safe"
         return None
 
-    # If the previous state was already ANY danger state, do not spam alerts.
-    # This prevents ESP32 sensor fluctuations (bouncing between critical and over_exploited) 
-    # from triggering an alert every 5 seconds.
-    danger_states = ["critical", "over_exploited", "anomaly"]
-    if last_state in danger_states and current_state in danger_states:
+    # If the situation is not escalating (e.g. bouncing between 3 and 2),
+    # we don't send an alert, and we don't lower the stored severity unless it's fully safe.
+    if curr_sev <= last_sev:
         return None
 
-    if current_state == last_state:
-        return None
+    # Situation escalated! Update state and fire alert.
+    _alert_state[village_id] = current_state
 
     # State changed to a danger level → fire alert
     water_level = village.get("waterLevel", "N/A")
