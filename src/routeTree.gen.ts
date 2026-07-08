@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const PredictionsRoute = PredictionsRouteImport.update({
 const MapRoute = MapRouteImport.update({
   id: '/map',
   path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/chat': typeof ChatRoute
+  '/contacts': typeof ContactsRoute
   '/map': typeof MapRoute
   '/predictions': typeof PredictionsRoute
   '/reports': typeof ReportsRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/chat': typeof ChatRoute
+  '/contacts': typeof ContactsRoute
   '/map': typeof MapRoute
   '/predictions': typeof PredictionsRoute
   '/reports': typeof ReportsRoute
@@ -68,20 +76,36 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/chat': typeof ChatRoute
+  '/contacts': typeof ContactsRoute
   '/map': typeof MapRoute
   '/predictions': typeof PredictionsRoute
   '/reports': typeof ReportsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/alerts' | '/chat' | '/map' | '/predictions' | '/reports'
+  fullPaths:
+    | '/'
+    | '/alerts'
+    | '/chat'
+    | '/contacts'
+    | '/map'
+    | '/predictions'
+    | '/reports'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/alerts' | '/chat' | '/map' | '/predictions' | '/reports'
+  to:
+    | '/'
+    | '/alerts'
+    | '/chat'
+    | '/contacts'
+    | '/map'
+    | '/predictions'
+    | '/reports'
   id:
     | '__root__'
     | '/'
     | '/alerts'
     | '/chat'
+    | '/contacts'
     | '/map'
     | '/predictions'
     | '/reports'
@@ -91,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlertsRoute: typeof AlertsRoute
   ChatRoute: typeof ChatRoute
+  ContactsRoute: typeof ContactsRoute
   MapRoute: typeof MapRoute
   PredictionsRoute: typeof PredictionsRoute
   ReportsRoute: typeof ReportsRoute
@@ -117,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/map'
       fullPath: '/map'
       preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -147,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlertsRoute: AlertsRoute,
   ChatRoute: ChatRoute,
+  ContactsRoute: ContactsRoute,
   MapRoute: MapRoute,
   PredictionsRoute: PredictionsRoute,
   ReportsRoute: ReportsRoute,

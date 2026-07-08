@@ -32,7 +32,7 @@ def _save(data: dict) -> None:
 class Contact(BaseModel):
     name: str
     phone: str
-    region: str  # district name — e.g. "Mahesana"
+    region: str
     note: Optional[str] = ""
 
 
@@ -93,7 +93,6 @@ def update_contact(contact_id: str, contact: Contact) -> ContactOut:
                     "region": contact.region.strip().title(),
                     "note": contact.note or "",
                 }
-                # Move between regions if region changed
                 if region != updated["region"]:
                     data[region].pop(i)
                     if not data[region]:
@@ -127,7 +126,6 @@ def delete_contact(contact_id: str):
 def get_contacts_for_region(region: str) -> list[dict]:
     """Internal helper — used by the alert dispatcher to get all contacts for a district."""
     data = _load()
-    # Try exact match first, then case-insensitive
     for reg, contacts in data.items():
         if reg.lower() == region.lower():
             return contacts
