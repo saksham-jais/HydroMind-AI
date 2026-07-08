@@ -224,7 +224,7 @@ async def _send_smtp_email(to_email: str, payload: dict) -> dict:
 
 async def dispatch_alert(payload: dict[str, Any]) -> dict:
     """
-    Send alert via available channels (SMTP first, then n8n, then local log).
+    Send alert via available channels (SMTP, WhatsApp officer, WhatsApp regional contacts).
     Enriches payload with recommended actions and risk level before sending.
     """
     payload.setdefault("timestamp", datetime.utcnow().isoformat() + "Z")
@@ -249,19 +249,50 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
         if recipient:
             results["email"] = await _send_smtp_email(recipient, payload)
 
-    # ── Channel 2: n8n webhook ────────────────────────────────────────
+    # ── Channel 2: WhatsApp to officer via n8n/Baileys webhook ────────
     if settings.n8n_webhook_url:
+        officer_phone = payload.get("officerPhone")
+        wa_payload = {**payload}
+        if officer_phone:
+            wa_payload["phone"] = officer_phone
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.post(settings.n8n_webhook_url, json=payload)
+                resp = await client.post(settings.n8n_webhook_url, json=wa_payload)
                 resp.raise_for_status()
-            logger.info("n8n alert dispatched for %s", payload.get("village"))
-            results["n8n"] = {"status": "dispatched", "dispatched": True, "httpStatus": resp.status_code}
+            logger.info("WhatsApp alert sent to officer for %s", payload.get("village"))
+            results["whatsapp_officer"] = {"status": "dispatched", "dispatched": True, "phone": officer_phone}
         except Exception as e:
-            logger.error("n8n dispatch failed: %s", e)
-            results["n8n"] = {"status": "failed", "dispatched": False, "error": str(e)}
+            logger.error("WhatsApp officer dispatch failed: %s", e)
+            results["whatsapp_officer"] = {"status": "failed", "dispatched": False, "error": str(e)}
 
-    # ── Channel 3: Local log (always runs) ───────────────────────────
+    # ── Channel 3: WhatsApp broadcast to all regional contacts ────────
+    if settings.n8n_webhook_url:
+        district = payload.get("district") or payload.get("village", "")
+        try:
+            from app.routers.contacts import get_contacts_for_region
+            regional_contacts = get_contacts_for_region(district)
+            contact_results = []
+            async with httpx.AsyncClient(timeout=10) as client:
+                for contact in regional_contacts:
+                    contact_payload = {
+                        **payload,
+                        "phone": contact["phone"],
+                        "recipientName": contact["name"],
+                        "recipientType": "local_contact",
+                    }
+                    try:
+                        r = await client.post(settings.n8n_webhook_url, json=contact_payload)
+                        r.raise_for_status()
+                        contact_results.append({"name": contact["name"], "phone": contact["phone"], "status": "sent"})
+                        logger.info("WhatsApp sent to local contact %s (%s)", contact["name"], contact["phone"])
+                    except Exception as ce:
+                        contact_results.append({"name": contact["name"], "phone": contact["phone"], "status": "failed", "error": str(ce)})
+            if contact_results:
+                results["whatsapp_contacts"] = {"dispatched": True, "recipients": contact_results}
+        except Exception as e:
+            logger.error("Regional contacts broadcast failed: %s", e)
+
+    # ── Fallback: Local log ───────────────────────────────────────────
     if not results:
         logger.info("No dispatch channels configured — alert logged: %s | Risk: %s%%",
                     payload.get("village"), risk)
@@ -280,6 +311,7 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
         "riskLevel": payload["riskLevel"],
         "village": payload.get("village"),
     }
+
 
 
 _alert_state = {}

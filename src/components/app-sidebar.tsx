@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Map, TrendingUp, Bell, MessageSquare, FileText, Droplets, LogOut } from "lucide-react";
+import { LayoutDashboard, Map, TrendingUp, Bell, Users, FileText, Droplets, LogOut } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import {
   Sidebar,
@@ -19,7 +19,7 @@ const items = [
   { title: "Map", url: "/map", icon: Map },
   { title: "Predictions", url: "/predictions", icon: TrendingUp },
   { title: "Alerts", url: "/alerts", icon: Bell },
-  { title: "Chat Assistant", url: "/chat", icon: MessageSquare },
+  { title: "Region Contacts", url: "/contacts", icon: Users },
   { title: "Reports", url: "/reports", icon: FileText },
 ];
 
