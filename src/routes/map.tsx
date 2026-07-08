@@ -72,7 +72,7 @@ function DistrictMapLayer({ year }: { year: number }) {
       >
         <TileLayer
           attribution="&copy; OpenStreetMap"
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <ZoomControl position="topright" />
         {districts.map((d: any) => {
