@@ -93,6 +93,22 @@ def list_officers():
     return list(_OFFICERS.values())
 
 
+def get_officer_for_district(district: str) -> dict | None:
+    """Helper: find the officer assigned to a specific district."""
+    if not district:
+        return None
+    d_lower = district.lower()
+    for off in _OFFICERS.values():
+        if any(d.lower() == d_lower for d in off.get("districts", [])):
+            return off
+    # Fallback to fuzzy match (e.g., Mehsana vs Mahesana)
+    if d_lower in ["mehsana", "mahesana"]:
+        for off in _OFFICERS.values():
+            if any(d.lower() in ["mehsana", "mahesana"] for d in off.get("districts", [])):
+                return off
+    return None
+
+
 @router.get("/{officer_id}")
 def get_officer(officer_id: str):
     off = _OFFICERS.get(officer_id)

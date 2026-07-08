@@ -348,16 +348,25 @@ async def check_and_alert(village: dict, risk_score: float, anomaly_score: float
 
     # State changed to a danger level → fire alert
     water_level = village.get("waterLevel", "N/A")
+    district = village.get("district")
+    
+    # Try to fetch live officer data from the officers router
+    try:
+        from app.routers.officers import get_officer_for_district
+        live_officer = get_officer_for_district(district) or {}
+    except Exception:
+        live_officer = {}
+
     payload = {
         "alertType": "groundwater_risk",
         "village": village.get("name"),
         "villageId": village_id,
-        "district": village.get("district"),
+        "district": district,
         "riskScore": risk_score,
         "anomalyScore": anomaly_score,
-        "officer": village.get("officer"),
-        "officerEmail": village.get("officerEmail"),
-        "officerPhone": village.get("officerPhone"),
+        "officer": live_officer.get("name") or village.get("officer"),
+        "officerEmail": live_officer.get("email") or village.get("officerEmail"),
+        "officerPhone": live_officer.get("phone") or village.get("officerPhone"),
         "waterLevel": water_level,
     }
     return await dispatch_alert(payload)

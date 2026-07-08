@@ -151,6 +151,7 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
           riskScore,
           anomalyScore: riskScore >= 80 ? 0.85 : null,
           officerEmail: selectedOfficer?.email,
+          officerPhone: selectedOfficer?.phone,
           officer: selectedOfficer?.name,
           waterLevel,
           village: villageSearch,
