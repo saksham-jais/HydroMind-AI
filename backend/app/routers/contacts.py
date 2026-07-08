@@ -49,7 +49,7 @@ def list_contacts(region: str | None = None) -> list[ContactOut]:
         if region and reg.lower() != region.lower():
             continue
         for c in contacts:
-            results.append(ContactOut(**c, region=reg))
+            results.append(ContactOut(**c))
     return results
 
 
