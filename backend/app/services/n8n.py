@@ -258,7 +258,8 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
             clean_phone = "".join(filter(str.isdigit, str(officer_phone)))
             wa_payload["phone"] = clean_phone
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            print(f"DEBUG WhatsApp Payload: {wa_payload}")
+            async with httpx.AsyncClient(timeout=60) as client:
                 resp = await client.post(settings.n8n_webhook_url, json=wa_payload)
                 resp.raise_for_status()
             logger.info("WhatsApp alert sent to officer for %s", payload.get("village"))
@@ -274,7 +275,7 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
             from app.routers.contacts import get_contacts_for_region
             regional_contacts = get_contacts_for_region(district)
             contact_results = []
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with httpx.AsyncClient(timeout=60) as client:
                 for contact in regional_contacts:
                     clean_contact_phone = "".join(filter(str.isdigit, str(contact["phone"])))
                     contact_payload = {

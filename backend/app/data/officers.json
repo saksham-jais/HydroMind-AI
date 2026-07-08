@@ -1,0 +1,68 @@
+{
+  "off-001": {
+    "id": "off-001",
+    "name": "Rajesh Sharma",
+    "email": "sakshamjais100@gmail.com",
+    "phone": "+91-98765-43210",
+    "region": "North Gujarat",
+    "districts": [
+      "Mahesana",
+      "Banaskantha",
+      "Patan"
+    ],
+    "role": "Senior District Water Officer",
+    "imageUrl": "https://ui-avatars.com/api/?name=Rajesh+Sharma&background=0ea5e9&color=fff&size=128",
+    "status": "active",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  "off-002": {
+    "id": "off-002",
+    "name": "Priya Patel",
+    "email": "priya.patel@gujarat.gov.in",
+    "phone": "+91-98765-12345",
+    "region": "Central Gujarat",
+    "districts": [
+      "Gandhinagar",
+      "Ahmedabad",
+      "Anand"
+    ],
+    "role": "District Water Officer",
+    "imageUrl": "https://ui-avatars.com/api/?name=Priya+Patel&background=8b5cf6&color=fff&size=128",
+    "status": "active",
+    "createdAt": "2024-02-01T10:00:00Z"
+  },
+  "off-003": {
+    "id": "off-003",
+    "name": "Amit Desai",
+    "email": "amit.desai@gujarat.gov.in",
+    "phone": "+91-99887-66554",
+    "region": "Saurashtra",
+    "districts": [
+      "Rajkot",
+      "Jamnagar",
+      "Junagadh",
+      "Porbandar"
+    ],
+    "role": "Regional Water Resources Manager",
+    "imageUrl": "https://ui-avatars.com/api/?name=Amit+Desai&background=f59e0b&color=fff&size=128",
+    "status": "active",
+    "createdAt": "2024-03-10T10:00:00Z"
+  },
+  "off-004": {
+    "id": "off-004",
+    "name": "Sunita Joshi",
+    "email": "sunita.joshi@gujarat.gov.in",
+    "phone": "+91-97654-32109",
+    "region": "South Gujarat",
+    "districts": [
+      "Surat",
+      "Valsad",
+      "Navsari",
+      "Bharuch"
+    ],
+    "role": "District Water Officer",
+    "imageUrl": "https://ui-avatars.com/api/?name=Sunita+Joshi&background=22c55e&color=fff&size=128",
+    "status": "active",
+    "createdAt": "2024-04-05T10:00:00Z"
+  }
+}
