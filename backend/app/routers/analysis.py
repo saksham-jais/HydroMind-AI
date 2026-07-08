@@ -277,54 +277,75 @@ def _load_historical_csv() -> dict:
 
 @router.get("/analysis/districts/historical-year")
 def get_historical_year(year: int = 2000):
-    """Return actual CSV groundwater depth for all districts at a given historical year (1950–2020)."""
+    """Return actual CSV groundwater depth AND ML model prediction for all districts at a given historical year (1950–2020)."""
     hist = _load_historical_csv()
-    
+    models, slopes, accuracy, _, _ = _load_forecast_data()
+
+    # Alias map: district display name -> model training name
+    ALIASES = {
+        "Mehsana": "Mehsana",
+        "Dahod": "Dohad",
+        "Chhota Udaipur": "Chhotaudepur",
+        "Devbhumi Dwarka": "Devbhumidwarka",
+    }
+
     CRISIS_THRESHOLD = 60.0
     result = []
-    
+
     for d in DISTRICT_COORDS:
         name = d["name"]
         dist_data = hist.get(name, {})
-        
-        # Find closest year in data (within ±3 years)
-        depth = None
+
+        # ── Actual CSV depth ──────────────────────────────────────────
+        actual_depth = None
         for delta in range(4):
             for candidate in [year - delta, year + delta]:
                 if candidate in dist_data:
-                    depth = dist_data[candidate]
+                    actual_depth = dist_data[candidate]
                     break
-            if depth is not None:
+            if actual_depth is not None:
                 break
-        
-        if depth is None:
-            # Fallback: use average across all available years
+
+        if actual_depth is None:
             all_vals = list(dist_data.values())
-            depth = sum(all_vals) / len(all_vals) if all_vals else 10.0
-        
-        # Calculate risk score from depth
-        risk = min(99, max(5, (depth / CRISIS_THRESHOLD) * 100))
-        if depth >= 45:
+            actual_depth = sum(all_vals) / len(all_vals) if all_vals else 10.0
+
+        # ── ML model prediction for this historical year ──────────────
+        model_key = ALIASES.get(name, name)
+        if model_key not in models:
+            model_key = name.strip().title()
+        model_info = models.get(model_key)
+        slope = slopes.get(model_key, 0)
+
+        if model_info:
+            ml_depth = abs(_predict_year(model_info, year))
+        else:
+            base = abs(actual_depth or 10.0)
+            ml_depth = max(1.0, base + slope * (year - 2005))
+
+        # ── Risk score based on actual CSV depth ──────────────────────
+        risk = min(99, max(5, (actual_depth / CRISIS_THRESHOLD) * 100))
+        if actual_depth >= 45:
             category = "Over-Exploited"
-        elif depth >= 25:
+        elif actual_depth >= 25:
             category = "Critical"
-        elif depth >= 15:
+        elif actual_depth >= 15:
             category = "Semi-Critical"
         else:
             category = "Safe"
-        
+
         result.append({
             "id": d["id"],
             "name": name,
             "lat": d["lat"],
             "lng": d["lng"],
-            "predictedDepth_m": round(depth, 2),
+            "predictedDepth_m": round(actual_depth, 2),
+            "mlDepth_m": round(ml_depth, 2),
             "riskScore": round(risk, 1),
             "category": category,
             "dataSource": "csv_actual",
-            "hasData": depth is not None,
         })
-    
+
     return result
 
 

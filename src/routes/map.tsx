@@ -91,11 +91,38 @@ function DistrictMapLayer({ year }: { year: number }) {
               }}
             >
               <Tooltip direction="top" offset={[0, -4]} opacity={1}>
-                <div className="min-w-[180px] text-xs">
+                <div className="min-w-[210px] text-xs">
                   <div className="mb-1.5 font-bold text-sm">{d.name}</div>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-muted-foreground">
-                    <span>{isHistorical ? "Recorded" : "Predicted"} {year}</span>
-                    <span className="font-semibold text-foreground">{d.predictedDepth_m.toFixed(1)} m bgl</span>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-muted-foreground">
+                    {isHistorical ? (
+                      <>
+                        {/* Actual vs ML side by side */}
+                        <span className="col-span-2 mb-0.5 flex items-center gap-1.5 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                          📊 Actual vs 🤖 ML ({year})
+                        </span>
+                        <span className="flex items-center gap-1">📊 Recorded</span>
+                        <span className="font-semibold text-blue-700">{d.predictedDepth_m.toFixed(1)} m bgl</span>
+                        <span className="flex items-center gap-1">🤖 ML Model</span>
+                        <span className={`font-semibold ${
+                          Math.abs(d.mlDepth_m - d.predictedDepth_m) < 3
+                            ? "text-green-600"
+                            : Math.abs(d.mlDepth_m - d.predictedDepth_m) < 7
+                            ? "text-orange-500"
+                            : "text-red-500"
+                        }`}>{d.mlDepth_m?.toFixed(1) ?? "—"} m bgl</span>
+                        <span>Error</span>
+                        <span className={`font-semibold ${
+                          Math.abs(d.mlDepth_m - d.predictedDepth_m) < 3 ? "text-green-600" : "text-orange-500"
+                        }`}>
+                          {d.mlDepth_m != null ? `±${Math.abs(d.mlDepth_m - d.predictedDepth_m).toFixed(1)} m` : "—"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Predicted {year}</span>
+                        <span className="font-semibold text-foreground">{d.predictedDepth_m.toFixed(1)} m bgl</span>
+                      </>
+                    )}
                     <span>Risk Score</span>
                     <span className="font-semibold text-foreground">{Math.round(d.riskScore)}%</span>
                     <span>Status</span>
@@ -105,10 +132,6 @@ function DistrictMapLayer({ year }: { year: number }) {
                       : d.category === "Semi-Critical" ? "text-yellow-400"
                       : "text-green-400"
                     }`}>{d.category}</span>
-                    <span>Source</span>
-                    <span className="font-semibold text-foreground">
-                      {isHistorical ? "📊 CSV Data" : "🤖 ML Model"}
-                    </span>
                   </div>
                 </div>
               </Tooltip>
