@@ -132,10 +132,25 @@ def ingest_sensor_reading(village_id: str, water_level: float, sensor_id: str = 
     return reading
 
 
+_readings_cache = {}
+import time
+
 def get_readings(village_id: str, limit: int = 50) -> list[dict]:
+    cache_key = f"{village_id}_{limit}"
+    now = time.time()
+    if cache_key in _readings_cache:
+        cached_time, cached_data = _readings_cache[cache_key]
+        if now - cached_time < 5:  # 5-second cache
+            return cached_data
+
     if _init_firebase() and _db:
-        ref = _db.reference(f"/readings/{village_id}")
-        data = ref.order_by_key().limit_to_last(limit).get() or {}
-        if isinstance(data, dict):
-            return list(data.values())
+        try:
+            ref = _db.reference(f"/readings/{village_id}")
+            data = ref.order_by_key().limit_to_last(limit).get() or {}
+            if isinstance(data, dict):
+                res = list(data.values())
+                _readings_cache[cache_key] = (now, res)
+                return res
+        except Exception:
+            pass
     return []

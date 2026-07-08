@@ -226,7 +226,7 @@ async def get_map_data():
     return map_data
 
 @router.get("/analysis/districts/forecast-year")
-async def get_all_districts_forecast_year(year: int = 2025):
+def get_all_districts_forecast_year(year: int = 2025):
     """Return ML-predicted depth & risk score for ALL districts at a given future year.
     Used to power the animated timeline map playback."""
     models, slopes, accuracy, reports, actuals = _load_forecast_data()
