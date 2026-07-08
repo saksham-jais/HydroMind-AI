@@ -38,7 +38,7 @@ interface Contact {
 const DISTRICTS = [
   "Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar",
   "Botad", "Chhotaudepur", "Dahod", "Dang", "Devbhumidwarka", "Gandhinagar", "Gir Somnath",
-  "Jamnagar", "Junagadh", "Kheda", "Kutch", "Mahesana", "Mahisagar", "Morbi", "Narmada",
+  "Jamnagar", "Junagadh", "Kheda", "Kutch", "Mehsana", "Mahisagar", "Morbi", "Narmada",
   "Navsari", "Panchmahal", "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat",
   "Surendranagar", "Tapi", "Vadodara", "Valsad",
 ];

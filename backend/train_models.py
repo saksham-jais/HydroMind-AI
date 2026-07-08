@@ -51,7 +51,7 @@ HISTORICAL_SUMMARY = {
     "Junagadh":       {"avg_post2010": 10.1, "depletion": -1.0},
     "Kachchh":        {"avg_post2010":  9.5, "depletion": +1.1},
     "Kheda":          {"avg_post2010":  7.8, "depletion": -0.7},
-    "Mahesana":       {"avg_post2010":  9.7, "depletion": -2.1},
+    "Mehsana":       {"avg_post2010":  9.7, "depletion": -2.1},
     "Mahisagar":      {"avg_post2010":  8.4, "depletion": +0.9},
     "Morbi":          {"avg_post2010":  6.4, "depletion": -1.4},
     "Narmada":        {"avg_post2010":  7.4, "depletion": -1.9},

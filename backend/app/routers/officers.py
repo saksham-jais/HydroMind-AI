@@ -26,7 +26,7 @@ _DEFAULT_OFFICERS = {
         "email": "sakshamjais100@gmail.com",
         "phone": "+91-98765-43210",
         "region": "North Gujarat",
-        "districts": ["Mahesana", "Banaskantha", "Patan"],
+        "districts": ["Mehsana", "Banaskantha", "Patan"],
         "role": "Senior District Water Officer",
         "imageUrl": "https://ui-avatars.com/api/?name=Rajesh+Sharma&background=0ea5e9&color=fff&size=128",
         "status": "active",
@@ -120,10 +120,10 @@ def get_officer_for_district(district: str) -> dict | None:
     for off in officers.values():
         if any(d.lower() == d_lower for d in off.get("districts", [])):
             return off
-    # Fallback to fuzzy match (e.g., Mehsana vs Mahesana)
-    if d_lower in ["mehsana", "mahesana"]:
+    # Fallback to fuzzy match (e.g., Mehsana vs Mehsana)
+    if d_lower in ["mehsana", "Mehsana"]:
         for off in officers.values():
-            if any(d.lower() in ["mehsana", "mahesana"] for d in off.get("districts", [])):
+            if any(d.lower() in ["mehsana", "Mehsana"] for d in off.get("districts", [])):
                 return off
     return None
 

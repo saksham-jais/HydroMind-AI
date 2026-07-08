@@ -26,11 +26,11 @@ export const Route = createFileRoute("/predictions")({
 });
 
 const ALL_DISTRICTS = [
-  "Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch","Bhavnagar",
-  "Botad","Chhota Udaipur","Dang","Devbhumi Dwarka","Dohad","Gandhinagar",
-  "Jamnagar","Junagadh","Kachchh","Kheda","Mahesana","Mahisagar","Morbi",
-  "Narmada","Navsari","Panchmahals","Patan","Porbandar","Sabarkantha",
-  "Surat","Surendranagar","Tapi","Vadodara","Valsad"
+  "Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar",
+  "Botad", "Chhota Udaipur", "Dang", "Devbhumi Dwarka", "Dohad", "Gandhinagar",
+  "Jamnagar", "Junagadh", "Kachchh", "Kheda", "Mehsana", "Mahisagar", "Morbi",
+  "Narmada", "Navsari", "Panchmahals", "Patan", "Porbandar", "Sabarkantha",
+  "Surat", "Surendranagar", "Tapi", "Vadodara", "Valsad"
 ];
 
 function useForecast(district: string, category = "") {
@@ -71,9 +71,9 @@ function useAllDistrictForecasts() {
 function RiskBadge({ category }: { category: string }) {
   const cfg: Record<string, { cls: string; label: string }> = {
     "Over-Exploited": { cls: "bg-critical/15 text-critical", label: "Over-Exploited" },
-    "Critical":       { cls: "bg-orange-500/15 text-orange-400", label: "Critical" },
-    "Semi-Critical":  { cls: "bg-warning/20 text-warning", label: "Semi-Critical" },
-    "Safe":           { cls: "bg-safe/15 text-safe", label: "Safe" },
+    "Critical": { cls: "bg-orange-500/15 text-orange-400", label: "Critical" },
+    "Semi-Critical": { cls: "bg-warning/20 text-warning", label: "Semi-Critical" },
+    "Safe": { cls: "bg-safe/15 text-safe", label: "Safe" },
   };
   const c = cfg[category] ?? { cls: "bg-muted text-muted-foreground", label: category };
   return <span className={`rounded px-2 py-0.5 text-[10px] font-medium ${c.cls}`}>{c.label}</span>;
@@ -115,30 +115,30 @@ export function DistrictForecastChart({ district, hideKpis = false, height = 220
     <div>
       {!hideKpis && (
         <div className="mb-3 flex flex-wrap items-center gap-4">
-        <div className="text-center">
-          <div className="text-3xl font-bold tabular-nums">{(forecast.currentDepth_m * 3.28084).toFixed(1)}<span className="text-base font-normal text-muted-foreground"> ft</span></div>
-          <div className="text-[10px] text-muted-foreground">Predicted 2026 depth</div>
-        </div>
-        <div className="text-center">
-          <div className={`text-3xl font-bold tabular-nums ${forecast.isInCrisis ? "text-critical" : "text-safe"}`}>
-            {forecast.daysToCrisis > 10000 ? "Stable" : `${forecast.daysToCrisis.toLocaleString()} days`}
+          <div className="text-center">
+            <div className="text-3xl font-bold tabular-nums">{(forecast.currentDepth_m * 3.28084).toFixed(1)}<span className="text-base font-normal text-muted-foreground"> ft</span></div>
+            <div className="text-[10px] text-muted-foreground">Predicted 2026 depth</div>
           </div>
-          <div className="text-[10px] text-muted-foreground">Time to crisis (~197ft threshold)</div>
-        </div>
-        <div className="text-center">
-          <div className={`text-3xl font-bold tabular-nums ${forecast.annualDeclineRate_m > 0 ? "text-critical" : "text-safe"}`}>
-            {forecast.annualDeclineRate_m > 0 ? "+" : ""}{(forecast.annualDeclineRate_m * 3.28084).toFixed(2)}
-            <span className="text-base font-normal text-muted-foreground"> ft/yr</span>
+          <div className="text-center">
+            <div className={`text-3xl font-bold tabular-nums ${forecast.isInCrisis ? "text-critical" : "text-safe"}`}>
+              {forecast.daysToCrisis > 10000 ? "Stable" : `${forecast.daysToCrisis.toLocaleString()} days`}
+            </div>
+            <div className="text-[10px] text-muted-foreground">Time to crisis (~197ft threshold)</div>
           </div>
-          <div className="text-[10px] text-muted-foreground">Annual rate ({forecast.modelType || "LR Model"})</div>
+          <div className="text-center">
+            <div className={`text-3xl font-bold tabular-nums ${forecast.annualDeclineRate_m > 0 ? "text-critical" : "text-safe"}`}>
+              {forecast.annualDeclineRate_m > 0 ? "+" : ""}{(forecast.annualDeclineRate_m * 3.28084).toFixed(2)}
+              <span className="text-base font-normal text-muted-foreground"> ft/yr</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground">Annual rate ({forecast.modelType || "LR Model"})</div>
+          </div>
+          <div className="ml-auto">
+            <RiskBadge category={forecast.isInCrisis ? (forecast.daysToCrisis < 3650 ? "Critical" : "Over-Exploited") : "Safe"} />
+            {forecast.crisisDate !== "Stable" && (
+              <div className="mt-1 text-center text-[10px] text-muted-foreground">Crisis: {forecast.crisisDate}</div>
+            )}
+          </div>
         </div>
-        <div className="ml-auto">
-          <RiskBadge category={forecast.isInCrisis ? (forecast.daysToCrisis < 3650 ? "Critical" : "Over-Exploited") : "Safe"} />
-          {forecast.crisisDate !== "Stable" && (
-            <div className="mt-1 text-center text-[10px] text-muted-foreground">Crisis: {forecast.crisisDate}</div>
-          )}
-        </div>
-      </div>
       )}
 
       <ResponsiveContainer width="100%" height={height}>
@@ -166,13 +166,13 @@ export function DistrictForecastChart({ district, hideKpis = false, height = 220
           <ReferenceLine y={196.85} stroke="#dc2626" strokeDasharray="4 2"
             label={{ value: "Crisis 197ft", position: "insideTopRight", fontSize: 9, fill: "#dc2626" }} />
           <Legend wrapperStyle={{ fontSize: 10 }} />
-          
+
           <Area type="monotone" dataKey="actual" name="Actual Data" stroke="#3b82f6"
             fill="url(#histGrad)" strokeWidth={2.5} dot={{ r: 2, fill: "#3b82f6", strokeWidth: 0 }} connectNulls />
-            
+
           <Area type="monotone" dataKey="historical" name="ML Trend (Past)" stroke="#3b82f6"
             fill="none" strokeWidth={1} dot={false} strokeDasharray="3 3" connectNulls />
-            
+
           <Area type="monotone" dataKey="predicted" name="ML Forecast" stroke="#dc2626"
             fill="url(#predGrad)" strokeWidth={2} dot={false} strokeDasharray="5 3" connectNulls />
         </AreaChart>
@@ -328,9 +328,9 @@ function Predictions() {
           <div>
             <h3 className="text-sm font-semibold">About the Forecasting Model</h3>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              HydroMind AI uses <strong>Linear Trend Extrapolation</strong> to project future groundwater levels. While advanced gradient boosters 
-              (like XGBoost or LightGBM) are great for identifying complex seasonal patterns within known date ranges, they are inherently incapable 
-              of extrapolating continuous trends into the deep future (they produce flat lines past the year 2020). By using linear extrapolation 
+              HydroMind AI uses <strong>Linear Trend Extrapolation</strong> to project future groundwater levels. While advanced gradient boosters
+              (like XGBoost or LightGBM) are great for identifying complex seasonal patterns within known date ranges, they are inherently incapable
+              of extrapolating continuous trends into the deep future (they produce flat lines past the year 2020). By using linear extrapolation
               on the most recent historical data segment (2005–2020), we capture the true annual rate of decline (m/yr) and project it accurately to 2075.
               The <strong>60m crisis threshold</strong> represents the depth at which most shallow bore wells in Gujarat run dry.
             </p>

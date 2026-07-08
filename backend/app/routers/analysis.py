@@ -35,16 +35,16 @@ class AnalysisResponse(BaseModel):
 CGWB_POLICY_KNOWLEDGE = """
 KEY FINDINGS — CGWB Dynamic Ground Water Resources of Gujarat, 2024:
 - State total GW recharge: 27.58 BCM; Extraction: 13.86 BCM; Stage: 54.21% (SAFE overall)
-- Over-Exploited districts (stage >100%): Banaskantha 119.81%, Patan 112.1%, Mahesana 109.67%, Gandhinagar 102.67%
+- Over-Exploited districts (stage >100%): Banaskantha 119.81%, Patan 112.1%, Mehsana 109.67%, Gandhinagar 102.67%
 - Semi-Critical (70-90%): Ahmedabad 73.63%, Sabarkantha 72.05%
 - Irrigation = 92% of all GW extraction; 2,043,726 abstraction structures in Gujarat (2024)
-- North Gujarat alluvial zone: phreatic aquifer nearly exhausted in Mahesana/Banaskantha; now extracting from confined aquifers B, C (100-300m depth)
-- Mahesana: water table declined >40m since 1961; 42,572 irrigation wells; highest risk for aquifer collapse
+- North Gujarat alluvial zone: phreatic aquifer nearly exhausted in Mehsana/Banaskantha; now extracting from confined aquifers B, C (100-300m depth)
+- Mehsana: water table declined >40m since 1961; 42,572 irrigation wells; highest risk for aquifer collapse
 - Banaskantha: 155,084 wells, extraction 141,568 HAM vs recharge 131,289 HAM — net DEFICIT of 10,279 HAM/year
 - Patan: 21,571 wells, net availability only 465 HAM — critically overstressed
 - GEC 2015 Methodology: category validated against 10-year water level trends
 - Recommendations: enforce groundwater regulation in OE districts, promote micro-irrigation, artificial recharge via check dams
-- River discharge data (2001-2025) shows Mahesana's Bhadar river: seasonal peak ~42.89 m3/s (Jul)
+- River discharge data (2001-2025) shows Mehsana's Bhadar river: seasonal peak ~42.89 m3/s (Jul)
 - Salinity intrusion risk in coastal Saurashtra (Jamnagar, Devbhumi Dwarka) due to over-extraction near coast
 """
 
@@ -121,7 +121,7 @@ def analyze_district(name: str):
 
     # ── 2. Live IoT for Mehsana ───────────────────────────────────────
     live_iot = None
-    if name.lower() in ("mehsana", "mahesana"):
+    if name.lower() in ("mehsana", "Mehsana"):
         try:
             live_readings = get_readings("v1", limit=5)
             if live_readings:
@@ -232,7 +232,7 @@ def get_all_districts_forecast_year(year: int = 2025):
     models, slopes, accuracy, reports, actuals = _load_forecast_data()
     
     ALIASES_REVERSE = {v: k for k, v in {
-        "Mehsana": "Mahesana",
+        "Mehsana": "Mehsana",
         "Dahod": "Dohad",
         "Chhotaudepur": "Chhota Udaipur",
         "Devbhumidwarka": "Devbhumi Dwarka",
@@ -267,7 +267,7 @@ def get_all_districts_forecast_year(year: int = 2025):
         # Only override if we are looking at the current timeframe (e.g. 2026)
         # Uses a 30-second server-side cache so Firebase is NOT called on every request.
         current_calendar_year = datetime.now().year
-        if year <= current_calendar_year + 1 and name.lower() in ("mehsana", "mahesana"):
+        if year <= current_calendar_year + 1 and name.lower() in ("mehsana", "Mehsana"):
             try:
                 import time as _time
                 now_ts = _time.time()
@@ -485,7 +485,7 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
     
     # Name alias map: frontend name -> CSV training name
     ALIASES = {
-        "Mehsana": "Mahesana",
+        "Mehsana": "Mehsana",
         "Dahod": "Dohad",
         "Chhotaudepur": "Chhota Udaipur",
         "Devbhumidwarka": "Devbhumi Dwarka",

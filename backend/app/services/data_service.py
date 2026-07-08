@@ -50,7 +50,7 @@ CGWB_2024_STATS = {
     "kachchh":       {"stage": 54.43,  "category": "Safe",           "extraction": 49558, "recharge": 93696},
     "kutch":         {"stage": 54.43,  "category": "Safe",           "extraction": 49558, "recharge": 93696},
     "kheda":         {"stage": 38.61,  "category": "Safe",           "extraction": 30649, "recharge": 82124},
-    "mahesana":      {"stage": 109.67, "category": "Over-Exploited", "extraction": 81043, "recharge": 75918},
+    "Mehsana":      {"stage": 109.67, "category": "Over-Exploited", "extraction": 81043, "recharge": 75918},
     "mehsana":       {"stage": 109.67, "category": "Over-Exploited", "extraction": 81043, "recharge": 75918},
     "mahisagar":     {"stage": 49.09,  "category": "Safe",           "extraction": 15025, "recharge": 31452},
     "morbi":         {"stage": 50.94,  "category": "Safe",           "extraction": 33738, "recharge": 68161},
@@ -90,7 +90,7 @@ HISTORICAL_SUMMARY = {
     "Junagadh":     {"avg_pre2000":11.1, "avg_post2010":10.1, "depletion": -1.0, "bounce": 7.0},
     "Kachchh":      {"avg_pre2000": 8.4, "avg_post2010": 9.5, "depletion": +1.1, "bounce": 1.6},
     "Kheda":        {"avg_pre2000": 8.5, "avg_post2010": 7.8, "depletion": -0.7, "bounce": 2.4},
-    "Mahesana":     {"avg_pre2000":11.8, "avg_post2010": 9.7, "depletion": -2.1, "bounce": 1.9},
+    "Mehsana":     {"avg_pre2000":11.8, "avg_post2010": 9.7, "depletion": -2.1, "bounce": 1.9},
     "Mahisagar":    {"avg_pre2000": 7.5, "avg_post2010": 8.4, "depletion": +0.9, "bounce": 4.0},
     "Morbi":        {"avg_pre2000": 7.8, "avg_post2010": 6.4, "depletion": -1.4, "bounce": 2.9},
     "Narmada":      {"avg_pre2000": 9.3, "avg_post2010": 7.4, "depletion": -1.9, "bounce": 2.7},
@@ -114,7 +114,7 @@ RAINFALL_NORMALS = {
     "chhota udepur": 1068, "dahod": 720, "dohad": 720, "dang": 2384,
     "devbhumi dwarka": 752, "gandhinagar": 763, "gir somnath": 978,
     "jamnagar": 500, "junagadh": 835, "kachchh": 405, "kutch": 405,
-    "kheda": 870, "mahesana": 717, "mehsana": 717, "mahisagar": 748,
+    "kheda": 870, "Mehsana": 717, "mehsana": 717, "mahisagar": 748,
     "morbi": 574, "narmada": 1155, "navsari": 1853, "panchmahals": 996,
     "patan": 580, "porbandar": 672, "rajkot": 614, "sabarkantha": 793,
     "surat": 1450, "surendranagar": 531, "tapi": 1368, "vadodara": 1016,
@@ -137,7 +137,7 @@ RIVER_STATS = {
     "Junagadh": {'monsoon_avg': 1.2, 'dry_avg': 4.5, 'peak': 139.2},
     "Kachchh": {'monsoon_avg': 107.4, 'dry_avg': 0, 'peak': 650.0},
     "Kheda": {'monsoon_avg': 70.0, 'dry_avg': 18.7, 'peak': 336.0},
-    "Mahesana": {'monsoon_avg': 42.9, 'dry_avg': 0, 'peak': 42.9},
+    "Mehsana": {'monsoon_avg': 42.9, 'dry_avg': 0, 'peak': 42.9},
     "Mahisagar": {'monsoon_avg': 13.3, 'dry_avg': 0, 'peak': 15.2},
     "Morbi": {'monsoon_avg': 75.9, 'dry_avg': 0, 'peak': 4871.2},
     "Navsari": {'monsoon_avg': 2.2, 'dry_avg': 0, 'peak': 165.4},
@@ -170,7 +170,7 @@ def get_recent_telemetry(district: str) -> dict:
         if k.lower() == normalize(district):
             return v
     # Alias
-    aliases = {"mehsana":"Mahesana", "dahod":"Dohad", "chhota udaipur":"Chhota Udaipur",
+    aliases = {"mehsana":"Mehsana", "dahod":"Dohad", "chhota udaipur":"Chhota Udaipur",
                "kutch":"Kachchh", "tapi":"TAPI", "arvalli":"Aravalli"}
     canon = aliases.get(normalize(district))
     if canon:
@@ -191,8 +191,8 @@ def get_historical_summary(district: str) -> dict:
     for k, v in HISTORICAL_SUMMARY.items():
         if k.lower() == normalize(district):
             return v
-    # Alias: Mehsana → Mahesana
-    aliases = {"mehsana":"Mahesana","mahesana":"Mahesana","dahod":"Dohad",
+    # Alias: Mehsana → Mehsana
+    aliases = {"mehsana":"Mehsana","Mehsana":"Mehsana","dahod":"Dohad",
                "dohad":"Dohad","chhota udaipur":"Chhota Udaipur",
                "kutch":"Kachchh","kachchh":"Kachchh","tapi":"TAPI",
                "arvalli":"Aravalli","aravalli":"Aravalli"}
@@ -208,7 +208,7 @@ def get_river_stats(district: str) -> dict:
         if k.lower() == normalize(district):
             return v
     # Alias
-    aliases = {"mehsana":"Mahesana", "dahod":"Dohad", "chhota udaipur":"Chhota Udaipur",
+    aliases = {"mehsana":"Mehsana", "dahod":"Dohad", "chhota udaipur":"Chhota Udaipur",
                "kutch":"Kachchh", "tapi":"TAPI", "arvalli":"Aravalli"}
     canon = aliases.get(normalize(district))
     if canon:
@@ -307,9 +307,9 @@ def get_district_analysis(district: str) -> dict:
     ctx_parts.append(
         "Gujarat state context (CGWB 2024): Total GW recharge = 27.58 BCM, extraction = 13.86 BCM (54.21%). "
         "Irrigation accounts for 92% of all GW extraction. "
-        "Over-Exploited districts: Banaskantha (119.81%), Patan (112.1%), Mahesana (109.67%), Gandhinagar (102.67%). "
-        "North Gujarat alluvial zone (Mahesana/Banaskantha/Gandhinagar/Patan) shows severe phreatic aquifer depletion — "
-        "water table declined >40m since 1961 in parts of Mahesana. "
+        "Over-Exploited districts: Banaskantha (119.81%), Patan (112.1%), Mehsana (109.67%), Gandhinagar (102.67%). "
+        "North Gujarat alluvial zone (Mehsana/Banaskantha/Gandhinagar/Patan) shows severe phreatic aquifer depletion — "
+        "water table declined >40m since 1961 in parts of Mehsana. "
         "Confined aquifers B, C now primary source as phreatic aquifer approaches exhaustion."
     )
 

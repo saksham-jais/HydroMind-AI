@@ -355,8 +355,14 @@ async def check_and_alert(village: dict, risk_score: float, anomaly_score: float
     if current_state == "safe":
         return None
 
+    # If the previous state was already ANY danger state, do not spam alerts.
+    # This prevents ESP32 sensor fluctuations (bouncing between critical and over_exploited) 
+    # from triggering an alert every 5 seconds.
+    danger_states = ["critical", "over_exploited", "anomaly"]
+    if last_state in danger_states and current_state in danger_states:
+        return None
+
     if current_state == last_state:
-        # Same danger state — no repeat alert (dedup)
         return None
 
     # State changed to a danger level → fire alert

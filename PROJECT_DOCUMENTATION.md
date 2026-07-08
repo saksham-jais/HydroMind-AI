@@ -401,7 +401,7 @@ The most complex AI system in HydroMind AI is the **3-Agent Sequential Pipeline*
 | :--- | :--- |
 | **Role** | Identifies WHY a district's groundwater is declining |
 | **Information Sources** | CGWB 2024 stage % vs 70% safe threshold, 70-year historical depth trend (deepening vs recovery), seasonal bounce (small bounce = poor monsoon recharge), abstraction structure count, North Gujarat aquifer vulnerability context |
-| **Key CGWB fact used** | Irrigation = 92% of all GW extraction; Mahesana water table declined >40m since 1961 |
+| **Key CGWB fact used** | Irrigation = 92% of all GW extraction; Mehsana water table declined >40m since 1961 |
 | **Output** | 2–3 sentence root cause paragraph with real numbers cited (e.g., "Mehsana's extraction is at 109.67% of annual recharge — 9.67% net deficit per year...") |
 | **Renders in** | `reason` field → "AI Root Cause Agent" panel on `/reports` |
 
@@ -551,7 +551,7 @@ HydroMind AI uses four distinct model/AI systems across different layers of the 
 | **Junagadh** | +0.164 | 0.014 | Declining |
 | **Kachchh** | +0.123 | -0.087 | Declining |
 | **Kheda** | -0.086 | -0.019 | Recovering |
-| **Mahesana** | +0.016 | -0.570 | Stable/Declining |
+| **Mehsana** | +0.016 | -0.570 | Stable/Declining |
 | **Mahisagar** | -0.010 | -0.048 | Recovering |
 | **Morbi** | -0.013 | -1.570 | Recovering |
 | **Narmada** | +0.051 | -0.403 | Declining |

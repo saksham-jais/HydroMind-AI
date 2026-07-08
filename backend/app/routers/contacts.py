@@ -133,7 +133,6 @@ def get_contacts_for_region(region: str) -> list[dict]:
     for reg, contacts in data.items():
         if reg.lower() == r_lower:
             return contacts
-            
     # Fuzzy match for Mehsana vs Mahesana
     if r_lower in ["mehsana", "mahesana"]:
         for reg, contacts in data.items():

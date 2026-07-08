@@ -34,7 +34,7 @@ def _build_knowledge_docs() -> list[str]:
     docs.append(
         "Gujarat state context (CGWB 2024): Total GW recharge = 27.58 BCM, extraction = 13.86 BCM (54.21%). "
         "Irrigation accounts for 92% of all GW extraction. "
-        "Over-Exploited districts: Banaskantha (119.81%), Patan (112.1%), Mahesana (109.67%), Gandhinagar (102.67%). "
+        "Over-Exploited districts: Banaskantha (119.81%), Patan (112.1%), Mehsana (109.67%), Gandhinagar (102.67%). "
         "Critical action: Enforce borewell moratoriums in over-exploited districts."
     )
     return docs

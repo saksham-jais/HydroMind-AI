@@ -136,11 +136,11 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
       toast.error("Please select or enter a village name");
       return;
     }
-    
+
     // Attempt to find village ID if they picked from the list, otherwise use a placeholder
     const matchedVillage = villages.find(v => v.name.toLowerCase() === villageSearch.toLowerCase());
     const finalVillageId = matchedVillage ? matchedVillage.id : "manual-entry";
-    
+
     setLoading(true);
     try {
       const r = await fetch(`${API}/alerts/dispatch`, {
@@ -180,10 +180,10 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Village Name</label>
-            <Input 
-              value={villageSearch} 
-              onChange={(e) => setVillageSearch(e.target.value)} 
-              placeholder="e.g. Mehsana" 
+            <Input
+              value={villageSearch}
+              onChange={(e) => setVillageSearch(e.target.value)}
+              placeholder="e.g. Mehsana"
               list="village-list"
               autoComplete="off"
             />
@@ -348,7 +348,7 @@ function OfficerModal({
           <Field label="Phone" value={form.phone} onChange={(v) => set("phone", v)} placeholder="+91-98765-43210" />
           <Field label="Region" value={form.region} onChange={(v) => set("region", v)} placeholder="e.g. North Gujarat" />
           <Field label="Role" value={form.role} onChange={(v) => set("role", v)} placeholder="District Water Officer" />
-          <Field label="Districts (comma-separated)" value={form.districts as string} onChange={(v) => set("districts", v)} placeholder="Mahesana, Banaskantha, Patan" />
+          <Field label="Districts (comma-separated)" value={form.districts as string} onChange={(v) => set("districts", v)} placeholder="Mehsana, Banaskantha, Patan" />
           <Field label="Profile Image URL" value={form.imageUrl} onChange={(v) => set("imageUrl", v)} placeholder="Leave blank for auto-avatar" />
           <div>
             <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</label>
@@ -426,7 +426,7 @@ function OfficerDirectory() {
 
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          {[1,2,3,4].map((i) => <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />)}
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />)}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
