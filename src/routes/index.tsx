@@ -111,7 +111,16 @@ function Overview() {
         <Card className="lg:col-span-2 p-5">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold">Gujarat Risk Heat Map</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Gujarat Risk Heat Map</h3>
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  Live as of {new Date().toLocaleString("en-IN", { 
+                    dateStyle: "medium", 
+                    timeStyle: "short", 
+                    timeZone: "Asia/Kolkata" 
+                  })}
+                </span>
+              </div>
               <p className="text-xs text-muted-foreground">Click any district · Color = ML risk score</p>
             </div>
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
