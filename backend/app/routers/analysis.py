@@ -481,14 +481,25 @@ async def get_district_forecast(name: str, cgwb_category: str = ""):
         if distance > 0:
             years_to_crisis = distance / effective_slope
             days_to_crisis = int(years_to_crisis * 365.25)
-            crisis_date = (datetime.now() + timedelta(days=days_to_crisis)).strftime("%d %b %y")
+            # Format date based on how far away crisis is:
+            # < 10 years   → exact date  "18 Jan 2031"
+            # 10-100 years → approx year "~Year 2085"  (declining within a human lifetime)
+            # > 100 years  → treat as Stable (not a meaningful crisis)
+            if days_to_crisis > 36500:         # > 100 years → Stable
+                crisis_date = "Stable"
+                days_to_crisis = 99999         # ← MUST reset so isInCrisis is consistent
+            elif days_to_crisis > 3650:        # 10-100 years → show approx year
+                crisis_year = datetime.now().year + int(years_to_crisis)
+                crisis_date = f"~Year {crisis_year}"
+            else:                              # < 10 years → show full date
+                crisis_date = (datetime.now() + timedelta(days=days_to_crisis)).strftime("%d %b %Y")
         else:
             days_to_crisis = 0
             crisis_date = "Past Threshold"
     else:
         days_to_crisis = 99999
         crisis_date = "Stable"
-    
+
     return {
         "district": district_key,
         "modelType": model_info.get("type", "LinearRegression"),
