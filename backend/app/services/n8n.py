@@ -254,7 +254,9 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
         officer_phone = payload.get("officerPhone")
         wa_payload = {**payload}
         if officer_phone:
-            wa_payload["phone"] = officer_phone
+            # Strip non-numeric characters (like + or spaces) for WhatsApp JID
+            clean_phone = "".join(filter(str.isdigit, str(officer_phone)))
+            wa_payload["phone"] = clean_phone
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(settings.n8n_webhook_url, json=wa_payload)
@@ -274,9 +276,10 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
             contact_results = []
             async with httpx.AsyncClient(timeout=10) as client:
                 for contact in regional_contacts:
+                    clean_contact_phone = "".join(filter(str.isdigit, str(contact["phone"])))
                     contact_payload = {
                         **payload,
-                        "phone": contact["phone"],
+                        "phone": clean_contact_phone,
                         "recipientName": contact["name"],
                         "recipientType": "local_contact",
                     }
