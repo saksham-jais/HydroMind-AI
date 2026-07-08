@@ -126,7 +126,18 @@ def delete_contact(contact_id: str):
 def get_contacts_for_region(region: str) -> list[dict]:
     """Internal helper — used by the alert dispatcher to get all contacts for a district."""
     data = _load()
+    if not region:
+        return []
+    
+    r_lower = region.lower()
     for reg, contacts in data.items():
-        if reg.lower() == region.lower():
+        if reg.lower() == r_lower:
             return contacts
+            
+    # Fuzzy match for Mehsana vs Mahesana
+    if r_lower in ["mehsana", "mahesana"]:
+        for reg, contacts in data.items():
+            if reg.lower() in ["mehsana", "mahesana"]:
+                return contacts
+                
     return []
