@@ -262,6 +262,21 @@ async def get_all_districts_forecast_year(year: int = 2025):
             current = abs(get_historical_summary(name).get("avg_post2010", 10.0))
             current_year = 2025
             predicted_depth = current + slope * (year - current_year)
+            
+        # ── IoT Override: Use live telemetry if available (e.g., Mehsana) ──
+        # Only override if we are looking at the current timeframe (e.g. 2026)
+        current_calendar_year = datetime.now().year
+        if year <= current_calendar_year + 1 and name.lower() in ("mehsana", "mahesana"):
+            try:
+                from app.services.firebase import get_readings
+                live_readings = get_readings("v1", limit=1)
+                if live_readings and len(live_readings) > 0:
+                    # Convert live waterLevel (ft) to meters
+                    live_ft = float(live_readings[-1].get("waterLevel", 0))
+                    if live_ft > 0:
+                        predicted_depth = live_ft * 0.3048  # ft to m
+            except Exception as e:
+                pass
         
         predicted_depth = max(0, predicted_depth)
         
