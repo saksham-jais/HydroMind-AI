@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ function useOfficers() {
   return useQuery<Officer[]>({
     queryKey: ["officers"],
     queryFn: async () => {
-      const r = await fetch(`${API}/api/officers`);
+      const r = await fetch(`${API}/officers`);
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
@@ -67,7 +67,7 @@ function useVillages() {
   return useQuery<any[]>({
     queryKey: ["villages"],
     queryFn: async () => {
-      const r = await fetch(`${API}/api/villages`);
+      const r = await fetch(`${API}/villages`);
       if (!r.ok) return [];
       return r.json();
     },
@@ -78,7 +78,7 @@ function useAlerts() {
   return useQuery<AlertLog[]>({
     queryKey: ["alerts"],
     queryFn: async () => {
-      const r = await fetch(`${API}/api/alerts`);
+      const r = await fetch(`${API}/alerts`);
       if (!r.ok) return [];
       const d = await r.json();
       return Array.isArray(d) ? d : [];
@@ -143,7 +143,7 @@ function DispatchPanel({ officers }: { officers: Officer[] }) {
     
     setLoading(true);
     try {
-      const r = await fetch(`${API}/api/alerts/dispatch`, {
+      const r = await fetch(`${API}/alerts/dispatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -298,6 +298,15 @@ function OfficerModal({
   );
   const [saving, setSaving] = useState(false);
 
+  // Re-populate form whenever the officer being edited changes
+  useEffect(() => {
+    if (initial) {
+      setForm({ ...initial, districts: initial.districts.join(", ") });
+    } else {
+      setForm(EMPTY_FORM);
+    }
+  }, [initial]);
+
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
@@ -383,7 +392,7 @@ function OfficerDirectory() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["officers"] });
 
   const handleSave = async (data: any) => {
-    const url = editing ? `${API}/api/officers/${editing.id}` : `${API}/api/officers`;
+    const url = editing ? `${API}/officers/${editing.id}` : `${API}/officers`;
     const method = editing ? "PUT" : "POST";
     const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     if (r.ok) {
@@ -395,7 +404,7 @@ function OfficerDirectory() {
   };
 
   const handleDelete = async (id: string) => {
-    const r = await fetch(`${API}/api/officers/${id}`, { method: "DELETE" });
+    const r = await fetch(`${API}/officers/${id}`, { method: "DELETE" });
     if (r.ok) { toast.success("Officer removed"); refresh(); }
     else toast.error("Delete failed");
     setDeleteId(null);

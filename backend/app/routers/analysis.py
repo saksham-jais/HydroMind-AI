@@ -297,15 +297,16 @@ def get_all_districts_forecast_year(year: int = 2025):
         predicted_depth = max(0, predicted_depth)
         
         # Convert depth to risk score (0-100)
-        # 0-10m = safe (30), 10-20m = semi-critical (55), 20-40m = critical (75), 40m+ = over-exploited (90+)
+        # 0-10m = safe (<30), 10-20m = semi-critical (50-74), 20-40m = critical (75-85), 40m+ = over-exploited (85+)
         if predicted_depth > 40:
             risk_score = min(100, 85 + (predicted_depth - 40) * 0.5)
             category = "Over-Exploited"
         elif predicted_depth > 20:
-            risk_score = 70 + (predicted_depth - 20) * 0.75
+            # Critical zone: starts at 75 so it crosses the alert threshold
+            risk_score = min(85, 75 + (predicted_depth - 20) * 0.5)
             category = "Critical"
         elif predicted_depth > 10:
-            risk_score = 50 + (predicted_depth - 10) * 2.0
+            risk_score = 50 + (predicted_depth - 10) * 2.4
             category = "Semi-Critical"
         else:
             risk_score = max(10, predicted_depth * 3)

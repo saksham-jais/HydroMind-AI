@@ -285,28 +285,34 @@ async def dispatch_alert(payload: dict[str, Any]) -> dict:
 _alert_state = {}
 
 async def check_and_alert(village: dict, risk_score: float, anomaly_score: float | None = None) -> dict | None:
-    """Trigger alert dispatch if risk or anomaly thresholds exceeded."""
-    should_alert = risk_score >= ALERT_THRESHOLD or (anomaly_score is not None and anomaly_score >= 0.8)
+    """Trigger alert dispatch only on state transitions (e.g. Safe→Critical)."""
     village_id = village.get("id")
 
-    if not should_alert:
-        if village_id in _alert_state:
-            del _alert_state[village_id]
+    # Determine current alert category from risk score
+    if risk_score >= 85:
+        current_state = "over_exploited"
+    elif risk_score >= ALERT_THRESHOLD:
+        current_state = "critical"
+    elif anomaly_score is not None and anomaly_score >= 0.8:
+        current_state = "anomaly"
+    else:
+        current_state = "safe"
+
+    last_state = _alert_state.get(village_id, "safe")
+
+    # Update state
+    _alert_state[village_id] = current_state
+
+    # Only alert on transitions INTO a danger state
+    if current_state == "safe":
         return None
 
+    if current_state == last_state:
+        # Same danger state — no repeat alert (dedup)
+        return None
+
+    # State changed to a danger level → fire alert
     water_level = village.get("waterLevel", "N/A")
-    try:
-        current_val = float(water_level)
-    except (ValueError, TypeError):
-        current_val = 0.0
-
-    if village_id in _alert_state:
-        last_val = _alert_state[village_id]
-        if current_val >= last_val:
-            return None
-            
-    _alert_state[village_id] = current_val
-
     payload = {
         "alertType": "groundwater_risk",
         "village": village.get("name"),

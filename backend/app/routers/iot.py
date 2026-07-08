@@ -50,9 +50,26 @@ async def post_reading(reading: SensorReading):
         None, lambda: predictor.anomalies(reading.villageId)
     )
     anomaly_score = anomalies[0]["score"] if anomalies else None
+
+    # ── Live risk score from ESP32 reading ──────────────────────────────
+    # The predictor.risk() returns a stale historical score from Firebase.
+    # We override it with a live score derived directly from the current
+    # water level so that alerts fire in real-time:
+    #   wl <= 0.075 ft  → Over-Exploited → score 90
+    #   wl <= 0.175 ft  → Critical       → score 76  (triggers alert ≥ 75)
+    #   wl >  0.175 ft  → Safe           → score 20
+    wl = reading.waterLevel
+    if wl <= 0.075:
+        live_risk_score = 90
+    elif wl <= 0.175:
+        live_risk_score = 76
+    else:
+        live_risk_score = 20
+    risk["score"] = live_risk_score
+
     alert_result = await check_and_alert(
         {**village, "waterLevel": reading.waterLevel},
-        risk["score"],
+        live_risk_score,
         anomaly_score,
     )
     return {
